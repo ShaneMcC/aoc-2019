@@ -5,7 +5,12 @@
 
 $required = 0;
 foreach ($input as $mod) {
-	$required += floor($mod / 3) - 2;
+	$mass = $mod;
+	while (true) {
+		$mass = floor($mass / 3) - 2;
+		if ($mass <= 0) { break; }
+		$required += $mass;
+	}
 }
 
 echo $required, "\n";
