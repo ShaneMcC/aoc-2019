@@ -3,14 +3,21 @@
 	require_once(dirname(__FILE__) . '/../common/common.php');
 	$input = getInputLines();
 
-$required = 0;
-foreach ($input as $mod) {
-	$mass = $mod;
-	while (true) {
-		$mass = floor($mass / 3) - 2;
-		if ($mass <= 0) { break; }
-		$required += $mass;
-	}
-}
+	$part1 = 0;
+	$part2 = 0;
 
-echo $required, "\n";
+	function getFuelCost($mass) { return max(0, floor($mass / 3) - 2); }
+
+	foreach ($input as $mod) {
+		$part1 += getFuelCost($mod);
+
+		$fuelCost = $mod;
+		while (true) {
+			$fuelCost = getFuelCost($fuelCost);
+			if ($fuelCost <= 0) { break; }
+			$part2 += $fuelCost;
+		}
+	}
+
+	echo 'Part 1: ', $part1, "\n";
+	echo 'Part 2: ', $part2, "\n";
