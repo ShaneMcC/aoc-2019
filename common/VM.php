@@ -205,7 +205,7 @@
 		 * @return Data from location.
 		 */
 		public function getData($loc = null) {
-			if ($loc == null) { $loc = $this->getLocation(); }
+			if ($loc === null) { $loc = $this->getLocation(); }
 			if (isset($this->data[$loc])) { return $this->data[$loc]; }
 			throw new Exception('Unknown Data Location: ' . $loc);
 		}
@@ -217,7 +217,7 @@
 		 * @param $val New Value
 		 */
 		public function setData($loc, $val) {
-			if ($loc == null) { $loc = $this->getLocation(); }
+			if ($loc === null) { $loc = $this->getLocation(); }
 			if (isset($this->data[$loc])) {
 				$this->data[$loc] = $val;
 			} else {
@@ -443,7 +443,7 @@
 					if (isset($this->miscData['pid'])) {
 						echo sprintf('[PID: %2s] ', $this->miscData['pid']);
 					}
-					echo sprintf('(%4s)   %-20s %s', $this->location, VM::instrToString($next), $this->dumpReg()), "\n";
+					echo sprintf('(%4s)   %-20s %s', $this->location, static::instrToString($next), $this->dumpReg()), "\n";
 					usleep($this->sleep);
 				}
 				list($instr, $data) = $next;
