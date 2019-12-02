@@ -4,31 +4,47 @@
 	$input = getInputLine();
 	$input = explode(',', $input);
 
-	$input[1] = 12;
-	$input[2] = 2;
 
-	for ($i = 0; $i < count($input); $i++) {
-		$opcode = $input[$i];
+	function computer($input, $noun, $verb) {
+		$input[1] = $noun;
+		$input[2] = $verb;
 
-		if ($opcode == 1) {
-			$num1 = $input[$i+1];
-			$num2 = $input[$i+2];
-			$pos = $input[$i+3];
+		for ($i = 0; $i < count($input); $i++) {
+			$opcode = $input[$i];
 
-			$input[$pos] = $input[$num1] + $input[$num2];
+			if ($opcode == 1) {
+				$num1 = $input[$i+1];
+				$num2 = $input[$i+2];
+				$pos = $input[$i+3];
 
-			$i += 3;
-		} else if ($opcode == 2) {
-			$num1 = $input[$i+1];
-			$num2 = $input[$i+2];
-			$pos = $input[$i+3];
+				$input[$pos] = $input[$num1] + $input[$num2];
 
-			$input[$pos] = $input[$num1] * $input[$num2];
+				$i += 3;
+			} else if ($opcode == 2) {
+				$num1 = $input[$i+1];
+				$num2 = $input[$i+2];
+				$pos = $input[$i+3];
 
-			$i += 3;
-		} else if ($opcode == 99) {
-			break;
+				$input[$pos] = $input[$num1] * $input[$num2];
+
+				$i += 3;
+			} else if ($opcode == 99) {
+				break;
+			}
 		}
+
+		return $input[0];
 	}
 
-echo 'Part 1: ', $input[0], "\n";
+echo 'Part 1: ', computer($input, 12, 2), "\n";
+
+for ($n = 0; $n <= 99; $n++) {
+	for ($v = 0; $v <= 99; $v++) {
+		$ans = computer($input, $n, $v);
+
+		if ($ans == 19690720) {
+			echo 'Part 2: 100 * ', $n, '+', $v, ' = ', (100 * $n + $v), "\n";
+			die();
+		}
+	}
+}
