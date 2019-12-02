@@ -226,180 +226,9 @@
 		}
 
 		/**
-		 * Iniit the Instructions.
+		 * Init the Instructions.
 		 */
-		protected function init() {
-			/**
-			 * set
-			 *   - set X Y
-			 *
-			 * sets register X to the value of Y.
-			 *
-			 * @param $vm VM to execute on.
-			 * @param $args Args for this instruction.
-			 */
-			$this->instrs['set'] = function($vm, $args) {
-				$x = $args[0];
-				$y = $vm->getValue($args[1]);
-
-				$vm->setReg($x, $y);
-			};
-
-			/**
-			 * add
-			 *   - add X Y
-			 *
-			 * increases register X by the value of Y.
-			 *
-			 * @param $vm VM to execute on.
-			 * @param $args Args for this instruction.
-			 */
-			$this->instrs['add'] = function($vm, $args) {
-				$x = $args[0];
-				$y = $vm->getValue($args[1]);
-
-				$vm->setReg($x, $vm->getReg($x) + $y);
-			};
-
-			/**
-			 * sub
-			 *   - sub X Y
-			 *
-			 * decreases register X by the value of Y.
-			 *
-			 * @param $vm VM to execute on.
-			 * @param $args Args for this instruction.
-			 */
-			$this->instrs['sub'] = function($vm, $args) {
-				$x = $args[0];
-				$y = $vm->getValue($args[1]);
-
-				$vm->setReg($x, $vm->getReg($x) - $y);
-			};
-
-			/**
-			 * mul
-			 *   - mul X Y
-			 *
-			 * sets register X to the result of multiplying the value contained
-			 * in register X by the value of Y.
-			 *
-			 * @param $vm VM to execute on.
-			 * @param $args Args for this instruction.
-			 */
-			$this->instrs['mul'] = function($vm, $args) {
-				$x = $args[0];
-				$y = $vm->getValue($args[1]);
-
-				$vm->setReg($x, $vm->getReg($x) * $y);
-			};
-
-			/**
-			 * mod
-			 *   - mod X Y
-			 *
-			 * sets register X to the remainder of dividing the value contained
-			 * in register X by the value of Y (that is, it sets X to the
-			 * result of X modulo Y).
-			 *
-			 * @param $vm VM to execute on.
-			 * @param $args Args for this instruction.
-			 */
-			$this->instrs['mod'] = function($vm, $args) {
-				$x = $args[0];
-				$y = $vm->getValue($args[1]);
-
-				$vm->setReg($x, $vm->getReg($x) % $y);
-			};
-
-			/**
-			 * jgz
-			 *   - jgz X Y
-			 *
-			 * jumps with an offset of the value of Y, but only if the value
-			 * of X is greater than zero. (An offset of 2 skips the next
-			 * instruction, an offset of -1 jumps to the previous instruction,
-			 * and so on.)
-			 *
-			 * @param $vm VM to execute on.
-			 * @param $args Args for this instruction.
-			 */
-			$this->instrs['jgz'] = function($vm, $args) {
-				$x = $vm->getValue($args[0]);
-				$y = $vm->getValue($args[1]);
-
-				if ($x > 0) {
-					$newloc = $vm->getLocation() + (int)$y;
-					$vm->jump($newloc - 1); // (-1 because step() always does +1)
-				}
-			};
-
-			/**
-			 * jnz
-			 *   - jnz X Y
-			 *
-			 * jumps with an offset of the value of Y, but only if the value
-			 * of X is not zero. (An offset of 2 skips the next instruction, an offset
-			 * of -1 jumps to the previous instruction, and so on.)
-			 *
-			 * @param $vm VM to execute on.
-			 * @param $args Args for this instruction.
-			 */
-			$this->instrs['jnz'] = function($vm, $args) {
-				$x = $vm->getValue($args[0]);
-				$y = $vm->getValue($args[1]);
-
-				if ($x != 0) {
-					$newloc = $vm->getLocation() + (int)$y;
-					$vm->jump($newloc - 1); // (-1 because step() always does +1)
-				}
-			};
-
-			/**
-			 * jlz
-			 *   - jlz X Y
-			 *
-			 * jumps with an offset of the value of Y, but only if the value
-			 * of X is less than zero. (An offset of 2 skips the next
-			 * instruction, an offset of -1 jumps to the previous instruction,
-			 * and so on.)
-			 *
-			 * @param $vm VM to execute on.
-			 * @param $args Args for this instruction.
-			 */
-			$this->instrs['jlz'] = function($vm, $args) {
-				$x = $vm->getValue($args[0]);
-				$y = $vm->getValue($args[1]);
-
-				if ($x < 0) {
-					$newloc = $vm->getLocation() + (int)$y;
-					$vm->jump($newloc - 1); // (-1 because step() always does +1)
-				}
-			};
-
-
-			/**
-			 * jez
-			 *   - jez X Y
-			 *
-			 * jumps with an offset of the value of Y, but only if the value
-			 * of X is equal to zero. (An offset of 2 skips the next
-			 * instruction, an offset of -1 jumps to the previous instruction,
-			 * and so on.)
-			 *
-			 * @param $vm VM to execute on.
-			 * @param $args Args for this instruction.
-			 */
-			$this->instrs['jez'] = function($vm, $args) {
-				$x = $vm->getValue($args[0]);
-				$y = $vm->getValue($args[1]);
-
-				if ($x == 0) {
-					$newloc = $vm->getLocation() + (int)$y;
-					$vm->jump($newloc - 1); // (-1 because step() always does +1)
-				}
-			};
-		}
+		protected function init() { }
 
 		/**
 		 * Get the current execution location.
@@ -438,22 +267,29 @@
 					return TRUE;
 				}
 
-				$next = $this->data[$this->location];
-				if ($this->debug) {
-					if (isset($this->miscData['pid'])) {
-						echo sprintf('[PID: %2s] ', $this->miscData['pid']);
-					}
-					echo sprintf('(%4s)   %-20s %s', $this->location, static::instrToString($next), $this->dumpReg()), "\n";
-					usleep($this->sleep);
-				}
-				list($instr, $data) = $next;
-				$ins = $this->getInstr($instr);
-				$ins($this, $data);
+				$this->doStep();
 
 				return TRUE;
 			} else {
 				return FALSE;
 			}
+		}
+
+		/**
+		 * Actually do what we need to for this step.
+		 */
+		function doStep() {
+			$next = $this->data[$this->location];
+			if ($this->debug) {
+				if (isset($this->miscData['pid'])) {
+					echo sprintf('[PID: %2s] ', $this->miscData['pid']);
+				}
+				echo sprintf('(%4s)   %-20s %s', $this->location, static::instrToString($next), $this->dumpReg()), "\n";
+				usleep($this->sleep);
+			}
+			list($instr, $data) = $next;
+			$ins = $this->getInstr($instr);
+			$ins($this, $data);
 		}
 
 		/**
@@ -492,7 +328,7 @@
 		}
 
 		/**
-		 * Continue stepping through untill we reach the end.
+		 * Continue stepping through until we reach the end.
 		 */
 		function run() {
 			while ($this->step()) { }

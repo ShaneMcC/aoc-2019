@@ -4,7 +4,6 @@
 	$input = getInputLine();
 	$input = explode(',', $input);
 
-
 	function computer($input, $noun, $verb) {
 		$input[1] = $noun;
 		$input[2] = $verb;
@@ -36,15 +35,18 @@
 		return $input[0];
 	}
 
-echo 'Part 1: ', computer($input, 12, 2), "\n";
+	$part1 = isTest() ? computer($input, 0, 0) : computer($input, 12, 2);
+	echo 'Part 1: ', $part1, "\n";
 
-for ($n = 0; $n <= 99; $n++) {
-	for ($v = 0; $v <= 99; $v++) {
-		$ans = computer($input, $n, $v);
+	if (isTest()) { die(); }
 
-		if ($ans == 19690720) {
-			echo 'Part 2: 100 * ', $n, '+', $v, ' = ', (100 * $n + $v), "\n";
-			die();
+	for ($n = 0; $n <= 99; $n++) {
+		for ($v = 0; $v <= 99; $v++) {
+			$ans = computer($input, $n, $v);
+
+			if ($ans == 19690720) {
+				echo 'Part 2: 100 * ', $n, '+', $v, ' = ', (100 * $n + $v), "\n";
+				die();
+			}
 		}
 	}
-}
