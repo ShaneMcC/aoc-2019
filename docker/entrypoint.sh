@@ -1,14 +1,26 @@
 #!/bin/bash
 
-DAY="${1}"
-TIME=0;
-shift;
+DAY="0"
+FILE="run.php"
+TIME="0";
 
-if [ "${DAY}" = "--time" ]; then
-	TIME="1"
-	DAY="${1}"
-	shift;
-fi;
+while [ "${1}" != "" ]; do
+	case "${1}" in
+		--file)
+			shift
+			FILE="${1}"
+			;;
+		--time)
+			TIME="1"
+			;;
+		*)
+			DAY="${1}"
+			shift
+			break;
+			;;
+	esac
+	shift
+done
 
 if ! [[ "${DAY}" =~ ^[0-9]+$ ]]; then
 	echo 'Invalid Day: '${DAY};
@@ -20,9 +32,14 @@ if [ ! -e "/code/${DAY}/run.php" ]; then
 	exit 1;
 fi;
 
+if [ ! -e "/code/${DAY}/${FILE}" ]; then
+	echo 'Unknown File: '${FILE};
+	exit 1;
+fi;
+
 if [ "${TIME}" = "1" ]; then
 	export TIMED=1
-	time php /code/${DAY}/run.php ${@}
+	time php /code/${DAY}/${FILE} ${@}
 else
-	php /code/${DAY}/run.php ${@}
+	php /code/${DAY}/${FILE} ${@}
 fi;

@@ -1,4 +1,4 @@
-FROM keinos/php8-jit
+FROM akondas/php:8.0-cli-alpine
 
 ADD entrypoint.sh /entrypoint.sh
 
