@@ -139,6 +139,15 @@
 		return $result;
 	}
 
+	/**
+	 * Calculate manhattan distance between 2 points.
+	 *
+	 * @param $x1 Point 1, X location.
+	 * @param $y1 Point 1, Y location.
+	 * @param $x2 Point 2, X location.
+	 * @param $y2 Point 2, Y location.
+	 * @return Manhattan distance.
+	 */
 	function manhattan($x1, $y1, $x2, $y2) {
 		return abs($x1 - $x2) + abs($y1 - $y2);
 	}
