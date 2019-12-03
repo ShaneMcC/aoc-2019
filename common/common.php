@@ -139,6 +139,10 @@
 		return $result;
 	}
 
+	function manhattan($x1, $y1, $x2, $y2) {
+		return abs($x1 - $x2) + abs($y1 - $y2);
+	}
+
 	/**
 	 * Generator to provide X/Y coordinates.
 	 * X is returned as the Key, Y as the value
