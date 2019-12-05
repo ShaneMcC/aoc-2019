@@ -81,6 +81,103 @@
 				$vm->appendOutput($vm->getData($z, $zMode));
 			}];
 
+
+			/**
+			 * JMPTRUE
+			 *   - 5 X Y
+			 *
+			 * if the first parameter is non-zero, it sets the instruction
+			 * pointer to the value from the second parameter. Otherwise, it
+			 * does nothing.
+			 *
+			 * @param $vm VM to execute on.
+			 * @param $args Args for this instruction.
+			 * @param $modes Parameter modes.
+			 */
+			$this->instrs['5'] = ['JMPTRUE', 2, function($vm, $args, $modes = []) {
+				[$x, $y] = $args;
+
+				$xMode = isset($modes[0]) ? $modes[0] : 0;
+				$yMode = isset($modes[1]) ? $modes[1] : 0;
+
+				if ($vm->getData($x, $xMode) != 0) {
+					$vm->jump($vm->getData($y, $yMode) - 1); // -1 because step auto-advances.
+				}
+			}];
+
+			/**
+			 * JMPFALSE
+			 *   - 6 X Y
+			 *
+			 * if the first parameter is zero, it sets the instruction pointer
+			 * to the value from the second parameter. Otherwise, it does
+			 * nothing.
+			 *
+			 * @param $vm VM to execute on.
+			 * @param $args Args for this instruction.
+			 * @param $modes Parameter modes.
+			 */
+			$this->instrs['6'] = ['JMPFALSE', 2, function($vm, $args, $modes = []) {
+				[$x, $y] = $args;
+
+				$xMode = isset($modes[0]) ? $modes[0] : 0;
+				$yMode = isset($modes[1]) ? $modes[1] : 0;
+
+				if ($vm->getData($x, $xMode) == 0) {
+					$vm->jump($vm->getData($y, $yMode) - 1); // -1 because step auto-advances.
+				}
+			}];
+
+			/**
+			 * LESSTHAN
+			 *   - 7 X Y Z
+			 *
+			 * if the first parameter is less than the second parameter, it
+			 * stores 1 in the position given by the third parameter.
+			 * Otherwise, it stores 0.
+			 *
+			 * @param $vm VM to execute on.
+			 * @param $args Args for this instruction.
+			 * @param $modes Parameter modes.
+			 */
+			$this->instrs['7'] = ['LESSTHAN', 3, function($vm, $args, $modes = []) {
+				[$x, $y, $z] = $args;
+
+				$xMode = isset($modes[0]) ? $modes[0] : 0;
+				$yMode = isset($modes[1]) ? $modes[1] : 0;
+
+				if ($vm->getData($x, $xMode) < $vm->getData($y, $yMode)) {
+					$vm->setData($z, 1);
+				} else {
+					$vm->setData($z, 0);
+				}
+			}];
+
+			/**
+			 * EQUALS
+			 *   - 8 X Y Z
+			 *
+			 * if the first parameter is equal to the second parameter, it
+			 * stores 1 in the position given by the third parameter.
+			 * Otherwise, it stores 0.
+			 *
+			 * @param $vm VM to execute on.
+			 * @param $args Args for this instruction.
+			 * @param $modes Parameter modes.
+			 */
+			$this->instrs['8'] = ['EQUALS', 3, function($vm, $args, $modes = []) {
+				[$x, $y, $z] = $args;
+
+				$xMode = isset($modes[0]) ? $modes[0] : 0;
+				$yMode = isset($modes[1]) ? $modes[1] : 0;
+
+				if ($vm->getData($x, $xMode) == $vm->getData($y, $yMode)) {
+					$vm->setData($z, 1);
+				} else {
+					$vm->setData($z, 0);
+				}
+			}];
+
 			/**
 			 * halt
 			 *   - 99
