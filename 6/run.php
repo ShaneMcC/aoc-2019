@@ -8,23 +8,47 @@
 		preg_match('#(.*)\)(.*)#SADi', $details, $m);
 		[$all, $orbited, $orbiter] = $m;
 
-		if (!isset($orbits[$orbiter])) { $orbits[$orbiter] = []; }
-		$orbits[$orbiter][] = $orbited;
+		$orbits[$orbiter] = $orbited;
 	}
 
-	function getOrbitCount($object) {
+	function getOrbitChain($object) {
 		global $orbits;
-		if (!isset($orbits[$object])) { return 0; }
+		if (!isset($orbits[$object])) { return []; }
 
-		$count = count($orbits[$object]);
-		foreach ($orbits[$object] as $child) {
-			$count += getOrbitCount($child);
+		$chain = [$orbits[$object]];
+		$chain = array_merge($chain, getOrbitChain($orbits[$object]));
+
+		return $chain;
+	}
+
+	function getCommonPath($orbit1, $orbit2) {
+		$path = [];
+
+		$i1 = count($orbit1) - 1;
+		$i2 = count($orbit2) - 1;
+
+		while (true) {
+			if ($orbit1[$i1] == $orbit2[$i2]) {
+				$path[] = $orbit1[$i1];
+			} else {
+				break;
+			}
+			$i1--;
+			$i2--;
 		}
 
-		return $count;
+		return $path;
 	}
 
 	$part1 = 0;
-	foreach (array_keys($orbits) as $object) { $part1 += getOrbitCount($object); }
+	foreach (array_keys($orbits) as $object) { $part1 += count(getOrbitChain($object)); }
 
 	echo 'Part 1: ', $part1, "\n";
+
+	$you = getOrbitChain('YOU');
+	$san = getOrbitChain('SAN');
+	$common = getCommonPath($you, $san);
+
+	$part2 = (count($you) - count($common)) + (count($san) - count($common));
+
+	echo 'Part 2: ', $part2, "\n";
