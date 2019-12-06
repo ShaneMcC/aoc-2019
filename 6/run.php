@@ -12,11 +12,13 @@
 	}
 
 	function getOrbitChain($object) {
-		global $orbits;
+		global $orbits, $savedOrbits;
+		if (isset($savedOrbits[$object])) { return $savedOrbits[$object]; }
 		if (!isset($orbits[$object])) { return []; }
 
 		$chain = [$orbits[$object]];
 		$chain = array_merge($chain, getOrbitChain($orbits[$object]));
+		$savedOrbits[$object] = $chain;
 
 		return $chain;
 	}
