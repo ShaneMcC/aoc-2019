@@ -32,30 +32,25 @@
 		return $lastOutput;
 	}
 
-	$part1 = 0;
-	$part1Settings = [];
-	foreach (getPermutations([0, 1, 2, 3, 4]) as $phaseSettings) {
-		$output = runAmplifiers($input, $phaseSettings);
 
-		if ($output > $part1) {
-			$part1 = $output;
-			$part1Settings = $phaseSettings;
+	function test($input, $possibleSettings) {
+		$answer = 0;
+		$settings = [];
+
+		foreach (getPermutations($possibleSettings) as $phaseSettings) {
+			$output = runAmplifiers($input, $phaseSettings);
+
+			if ($output > $answer) {
+				$answer = $output;
+				$settings = $phaseSettings;
+			}
 		}
 
+		return [$answer, $settings];
 	}
 
+	[$part1, $part1Settings] = test($input, [0, 1, 2, 3, 4]);
 	echo 'Part 1: ', $part1, ' with [', implode(', ', $part1Settings), ']', "\n";
 
-	$part2 = 0;
-	$part2Settings = [];
-	foreach (getPermutations([5, 6, 7, 8, 9]) as $phaseSettings) {
-		$output = runAmplifiers($input, $phaseSettings);
-
-		if ($output > $part2) {
-			$part2 = $output;
-			$part2Settings = $phaseSettings;
-		}
-
-	}
-
+	[$part2, $part2Settings] = test($input, [5, 6, 7, 8, 9]);
 	echo 'Part 2: ', $part2, ' with [', implode(', ', $part2Settings), ']', "\n";
