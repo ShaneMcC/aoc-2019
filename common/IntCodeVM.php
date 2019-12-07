@@ -60,7 +60,13 @@
 			 */
 			$this->instrs['3'] = ['INPUT', 1, function($vm, $args, $modes = []) {
 				[$z] = $args;
-				$vm->setData($z, $vm->getInput());
+				$input = $vm->getInput();
+				if ($input !== NULL) {
+					$vm->setData($z, $input);
+				} else {
+					// Jump back to current location and try again later.
+					$vm->jump($this->getLocation() - 1); // -1 because step auto-advances.
+				}
 			}];
 
 			/**
@@ -251,6 +257,7 @@
 			$this->location += $argCount;
 
 			if ($this->debug) {
+				if (isset($this->miscData['pid'])) { echo sprintf('[PID: %2s] ', $this->miscData['pid']); }
 				echo sprintf('(%4s)   %-20s', $this->location, static::instrToString([$name . '{' . $next . '=>' . $instr . '/'. implode(',', $modes) . '}', $args])), "\n";
 				usleep($this->sleep);
 			}
