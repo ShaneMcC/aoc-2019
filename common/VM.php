@@ -254,7 +254,9 @@
 		 * @param $loc Location to jump to.
 		 */
 		function jump($loc) {
-			$this->location = $loc;
+			// We do -1 here becuase step() will do + 1 immediately so this
+			// will put us in the right location.
+			$this->location = $loc - 1;
 		}
 
 		/**

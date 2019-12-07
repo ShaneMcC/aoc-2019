@@ -106,7 +106,7 @@
 				$yMode = isset($modes[1]) ? $modes[1] : 0;
 
 				if ($vm->getData($x, $xMode) != 0) {
-					$vm->jump($vm->getData($y, $yMode) - 1); // -1 because step auto-advances.
+					$vm->jump($vm->getData($y, $yMode));
 				}
 			}];
 
@@ -129,7 +129,7 @@
 				$yMode = isset($modes[1]) ? $modes[1] : 0;
 
 				if ($vm->getData($x, $xMode) == 0) {
-					$vm->jump($vm->getData($y, $yMode) - 1); // -1 because step auto-advances.
+					$vm->jump($vm->getData($y, $yMode));
 				}
 			}];
 
