@@ -65,7 +65,8 @@
 					$vm->setData($z, $input);
 				} else {
 					// Jump back to current location and try again later.
-					$vm->jump($this->getLocation() - 1); // -1 because step auto-advances.
+					$vm->jump($this->getLocation() - 2); // -1 because step auto-advances.
+					throw new Exception('No Input Available');
 				}
 			}];
 
