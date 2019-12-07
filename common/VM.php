@@ -264,6 +264,7 @@
 		 *         to execute.
 		 */
 		function step() {
+			$startLocation = $this->location;
 			if (isset($this->data[$this->location + 1])) {
 				$this->location++;
 
@@ -276,7 +277,14 @@
 					return TRUE;
 				}
 
-				$this->doStep();
+				try {
+					$this->doStep();
+				} catch (Throwable $ex) {
+					// Reset Location Pointer to the same instruction then
+					// rethrow the error.
+					$this->location = $startLocation;
+					throw $ex;
+				}
 
 				return TRUE;
 			} else {

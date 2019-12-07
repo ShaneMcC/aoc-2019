@@ -64,8 +64,6 @@
 				if ($input !== NULL) {
 					$vm->setData($z, $input);
 				} else {
-					// Jump back to current location and try again later.
-					$vm->jump($this->getLocation() - 2);
 					throw new Exception('No Input Available');
 				}
 			}];
