@@ -19,12 +19,8 @@
 		while (!$hasFinished) {
 			foreach ($amps as $amp => $vm) {
 				$vm->appendInput($lastOutput);
-				try {
-					$vm->run();
-					$hasFinished = true;
-				} catch (Exception $ex) {
-					/* Need new input, so we move on to the next one. */
-				}
+				try { $vm->run(); } catch (Exception $ex) { /* Need new input, so we move on to the next one. */ }
+				$hasFinished |= $vm->hasExited();
 				$lastOutput = $vm->getOutput();
 			}
 		}

@@ -65,7 +65,7 @@
 					$vm->setData($z, $input);
 				} else {
 					// Jump back to current location and try again later.
-					$vm->jump($this->getLocation() - 2); // -1 because step auto-advances.
+					$vm->jump($this->getLocation() - 2);
 					throw new Exception('No Input Available');
 				}
 			}];
@@ -195,15 +195,15 @@
 			 * @param $args Args for this instruction.
 			 */
 			$this->instrs['99'] = ['HALT', 0, function($vm, $args, $modes = []) {
-				$vm->jump(count($this->data)); // Jump to end to halt.
+				$vm->end(0);
 			}];
 		}
 
 		// Turn output into a queue.
 		public function clearOutput() { $this->output = []; }
 		public function getOutputLength() { return count($this->output); }
-		public function appendOutput($str) { $this->output[] = $str; }
-		public function setOutput($str) { $this->output[] = [$str]; }
+		public function appendOutput($value) { $this->output[] = $value; }
+		public function setOutput($value) { $this->output = is_array($value) ? $value : [$value]; }
 		public function getOutput() { return array_shift($this->output); }
 		public function getAllOutput() { return $this->output; }
 
@@ -212,16 +212,17 @@
 
 		public function clearInput() { $this->input = []; }
 		public function getInputLength() { return count($this->input); }
-		public function appendInput($str) { $this->input[] = $str; }
-		public function setInput($str) { $this->input[] = [$str]; }
+		public function appendInput($value) { $this->input[] = $value; }
+		public function setInput($value) { $this->input = is_array($value) ? $value : [$value]; }
 		public function getInput() { return array_shift($this->input); }
 		public function getAllInput() { return $this->input; }
 
+		// Reset also needs to reset our new input queue not just the output
+		// queue.
 		function reset() {
 			parent::reset();
 			$this->clearInput();
 		}
-
 
 		/**
 		 * Get the data at the given location, understanding mode parameters.
@@ -250,7 +251,9 @@
 		 */
 		function doStep() {
 			$next = $this->data[$this->location];
-			[$instr, $modes] = $this->getParameterAndModes($next);
+
+			$instr = $next % 100;
+			$modes = array_reverse(str_split(substr($next, 0, -2)));
 
 			[$name, $argCount, $ins] = $this->getInstr($instr);
 
@@ -264,20 +267,6 @@
 			}
 
 			$ins($this, $args, $modes);
-		}
-
-		function getParameterAndModes($code) {
-			// TODO: There will be nicer mathsy ways of doing this that we'll
-			//       figure out later.
-
-			$bits = str_split($code);
-
-			$mode = array_pop($bits);
-			$mode = (int)(array_pop($bits) . $mode);
-
-			$bits = array_reverse($bits);
-
-			return [$mode, $bits];
 		}
 
 		/**

@@ -90,6 +90,15 @@
 		}
 
 		/**
+		 * Has this VM exited?
+		 *
+		 * @return True if we have exited.
+		 */
+		function hasExited() {
+			return ($this->location >= count($this->data));
+		}
+
+		/**
 		 * Clear stored output.
 		 */
 		public function clearOutput() {
