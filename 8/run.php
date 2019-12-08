@@ -3,7 +3,7 @@
 	require_once(dirname(__FILE__) . '/../common/common.php');
 	$input = getInputLine();
 
-	$width = isTest() ? 3 : 25;
+	$width = isTest() ? 2 : 25;
 	$height = isTest() ? 2 : 6;
 
 	function getLayers($input, $width, $height) {
@@ -43,3 +43,18 @@
 	}
 
 	echo 'Part 1: ', $bestMul12, "\n";
+
+	$finalImage = $layers[0];
+	foreach ($layers as $layer) {
+		foreach (yieldXY(0,0, $width, $height, false) as $x => $y) {
+			if ($finalImage[$y][$x] == '2') {
+				$finalImage[$y][$x] = $layer[$y][$x];
+			}
+		}
+	}
+	$finalImage = implode("\n", $finalImage);
+
+	$finalImage = str_replace('0', ' ', $finalImage);
+	$finalImage = str_replace('1', '#', $finalImage);
+
+	echo 'Part 2: ', "\n", $finalImage, "\n";
