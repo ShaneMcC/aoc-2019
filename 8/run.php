@@ -110,4 +110,4 @@
 
 	[$finalImage, $text] = flattenImage($layers);
 	echo 'Part 2: ', $text, "\n";
-	if (isDebug()) { echo $finalImage, "\n"; }
+	echo $finalImage, "\n";
