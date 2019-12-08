@@ -26,35 +26,82 @@
 		return $layers;
 	}
 
-	$layers = getLayers($input, $width, $height);
+	function getPart1($layers) {
+		$bestLayer = 0;
+		$bestCount0 = PHP_INT_MAX;
+		$bestMul12 = 0;
 
-	$bestCount0 = PHP_INT_MAX;
-	$bestMul12 = 0;
-	foreach ($layers as $layer) {
-		$merged = implode('', $layer);
-		$count0 = substr_count($merged, '0');
-		$count1 = substr_count($merged, '1');
-		$count2 = substr_count($merged, '2');
+		foreach ($layers as $layerID => $layer) {
+			$merged = implode('', $layer);
+			$count0 = substr_count($merged, '0');
+			$count1 = substr_count($merged, '1');
+			$count2 = substr_count($merged, '2');
 
-		if ($count0 < $bestCount0) {
-			$bestCount0 = $count0;
-			$bestMul12 = $count1 * $count2;
-		}
-	}
-
-	echo 'Part 1: ', $bestMul12, "\n";
-
-	$finalImage = $layers[0];
-	foreach ($layers as $layer) {
-		foreach (yieldXY(0,0, $width, $height, false) as $x => $y) {
-			if ($finalImage[$y][$x] == '2') {
-				$finalImage[$y][$x] = $layer[$y][$x];
+			if ($count0 < $bestCount0) {
+				$bestCount0 = $count0;
+				$bestMul12 = $count1 * $count2;
+				$bestLayer = $layerID;
 			}
 		}
+
+		return [$bestLayer, $bestCount0, $bestMul12];
 	}
-	$finalImage = implode("\n", $finalImage);
 
-	$finalImage = str_replace('0', ' ', $finalImage);
-	$finalImage = str_replace('1', '#', $finalImage);
+	function flattenImage($layers) {
+		$width = strlen($layers[0][0]);
+		$height = count($layers[0]);
 
-	echo 'Part 2: ', "\n", $finalImage, "\n";
+		$finalImage = $layers[0];
+
+		foreach ($layers as $layer) {
+			foreach (yieldXY(0,0, $width, $height, false) as $x => $y) {
+				if ($finalImage[$y][$x] == '2') {
+					$finalImage[$y][$x] = $layer[$y][$x];
+				}
+			}
+		}
+		$text = decodeText($finalImage);
+
+		$finalImage = implode("\n", $finalImage);
+		$finalImage = str_replace('0', ' ', $finalImage);
+		$finalImage = str_replace('1', '█', $finalImage);
+
+		return [$finalImage, $text];
+	}
+
+	$encodedChars = ['011001001010010111101001010010' => 'A',
+	                 '011001001010000100001001001100' => 'C',
+	                 '001100001000010000101001001100' => 'J',
+	                 '111100001000100010001000011110' => 'Z',
+	                ];
+
+	function decodeText($layers) {
+		global $encodedChars;
+
+		$text = '';
+		$charCount = strlen($layers[0]) / 5;
+		$chars = [];
+
+		foreach ($layers as $layer) {
+			for ($i = 0; $i < $charCount; $i++) {
+				$chars[$i][] = substr($layer, ($i * 5), 5);
+			}
+		}
+
+		foreach ($chars as $c) {
+			$id = implode('', $c);
+			if (isDebug() && !isset($encodedChars[$id])) { echo 'Unknown Letter: ', $id, "\n"; }
+			$text .= isset($encodedChars[$id]) ? $encodedChars[$id] : '?';
+		}
+
+		return $text;
+	}
+
+	$layers = getLayers($input, $width, $height);
+
+	[$bestLayer, $bestCount0, $bestMul12] = getPart1($layers);
+	echo 'Part 1: Layer ', $bestLayer, ' has ', $bestCount0, ' 0s for a total of: ', $bestMul12, "\n";
+
+	[$finalImage, $text] = flattenImage($layers);
+	echo 'Part 2: ', $text, "\n";
+	if (isDebug()) { echo $finalImage, "\n"; }
