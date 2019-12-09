@@ -10,9 +10,6 @@
 		/** Known Instructions. */
 		protected $instrs = array();
 
-		/** Internal Registers. */
-		protected $registers = array();
-
 		/** Data to execute. */
 		protected $data = array();
 
@@ -59,14 +56,10 @@
 
 		/**
 		 * Reset the VM.
-		 *
-		 * This resets the registers to all-0 and moves the location to the
-		 * beginning.
 		 */
 		function reset() {
 			$this->exitCode = 0;
 			$this->location = -1;
-			$this->registers = array();
 			$this->clearOutput();
 		}
 
@@ -306,7 +299,7 @@
 				if (isset($this->miscData['pid'])) {
 					echo sprintf('[PID: %2s] ', $this->miscData['pid']);
 				}
-				echo sprintf('(%4s)   %-20s %s', $this->location, static::instrToString($next), $this->dumpReg()), "\n";
+				echo sprintf('(%4s)   %-20s', $this->location, static::instrToString($next)), "\n";
 				usleep($this->sleep);
 			}
 			list($instr, $data) = $next;
@@ -354,72 +347,6 @@
 		 */
 		function run() {
 			while ($this->step()) { }
-		}
-
-		/**
-		 * Check if the given input is a valid register.
-		 *
-		 * @param $reg Register to check
-		 * @return True if valid register.
-		 */
-		function isReg($reg) {
-			if (preg_match('#^[a-z]$#i', $reg)) {
-				if (!isset($this->registers[strtolower($reg)])) {
-					$this->registers[strtolower($reg)] = 0;
-				}
-				return true;
-			}
-
-			return false;
-		}
-
-		/**
-		 * Get the value of the given register.
-		 *
-		 * @param $reg Register to get value of
-		 * @return Value of $reg
-		 */
-		function getReg($reg) {
-			if ($this->isReg($reg)) { return $this->registers[$reg]; }
-			throw new Exception('Unknown Register: ' . $reg);
-		}
-
-		/**
-		 * Get the value of the given input.
-		 * If $value is a valid register, the register value will be returned,
-		 * else $value will be returned.
-		 *
-		 * @param $value Value or register name.
-		 * @return $value or value of $value register
-		 */
-		function getValue($value) {
-			if ($this->isReg($value)) { return $this->registers[$value]; }
-			return $value;
-		}
-
-		/**
-		 * Set the value of the given register.
-		 *
-		 * @param $reg Register to Set value of
-		 * @param $val Value to set register to.
-		 */
-		function setReg($reg, $val) {
-			if ($this->isReg($reg)) { $this->registers[$reg] = $val; return $val; }
-			throw new Exception('Unknown Register: ' . $reg);
-		}
-
-		/**
-		 * Set the value of the given register.
-		 *
-		 * @param $reg Register to Set value of
-		 * @param $val Value to set register to.
-		 */
-		function dumpReg() {
-			$out = [];
-			foreach ($this->registers as $reg => $val) {
-				$out[] = sprintf('%s: %-5s', $reg, $val);
-			}
-			return '[' . implode('] [', $out) . ']';
 		}
 
 		/**
