@@ -1,18 +1,38 @@
 #!/usr/bin/php
 <?php
 	require_once(dirname(__FILE__) . '/../common/common.php');
-	require_once(dirname(__FILE__) . '/../common/IntCodeVM.php');
 	$input = getInputLine();
+	$input = explode(',', $input);
 
 	function computer($input, $noun, $verb) {
-		$vm = new IntCodeVM(IntCodeVM::parseInstrLines($input));
+		$input[1] = $noun;
+		$input[2] = $verb;
 
-		$vm->setData(1, $noun);
-		$vm->setData(2, $verb);
-		$vm->setDebug(isDebug());
-		$vm->run();
+		for ($i = 0; $i < count($input); $i++) {
+			$opcode = $input[$i];
 
-		return $vm->getData(0);
+			if ($opcode == 1) {
+				$num1 = $input[$i+1];
+				$num2 = $input[$i+2];
+				$pos = $input[$i+3];
+
+				$input[$pos] = $input[$num1] + $input[$num2];
+
+				$i += 3;
+			} else if ($opcode == 2) {
+				$num1 = $input[$i+1];
+				$num2 = $input[$i+2];
+				$pos = $input[$i+3];
+
+				$input[$pos] = $input[$num1] * $input[$num2];
+
+				$i += 3;
+			} else if ($opcode == 99) {
+				break;
+			}
+		}
+
+		return $input[0];
 	}
 
 	$part1 = isTest() ? computer($input, 0, 0) : computer($input, 12, 2);
