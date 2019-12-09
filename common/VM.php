@@ -22,6 +22,9 @@
 		/** Our exit code. */
 		protected $exitCode = 0;
 
+		/** Have we exited? */
+		protected $exited = false;
+
 		/** Output from the VM. */
 		protected $output = '';
 
@@ -76,7 +79,7 @@
 		 * @param $exitCode Set the exit code.
 		 */
 		function end($exitCode = 0) {
-			$this->location = count($this->data);
+			$this->exited = true;
 			$this->exitCode = $exitCode;
 		}
 
@@ -95,7 +98,7 @@
 		 * @return True if we have exited.
 		 */
 		function hasExited() {
-			return ($this->location >= count($this->data));
+			return $this->exited;
 		}
 
 		/**
@@ -267,7 +270,7 @@
 		 */
 		function step() {
 			$startLocation = $this->location;
-			if (isset($this->data[$this->location + 1])) {
+			if (!$this->exited && isset($this->data[$this->location + 1])) {
 				$this->location++;
 
 				$optimise = $this->doReadAheads();
