@@ -25,7 +25,6 @@
 	}
 
 	function drawLaserShow($asteroids, $bestX, $bestY, $destroyedPoints) {
-
 		echo "\n\n";
 		$remainingAsteroids = $asteroids;
 

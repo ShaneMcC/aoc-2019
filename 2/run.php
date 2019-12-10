@@ -21,12 +21,16 @@
 	if (isTest()) { die(); }
 
 	for ($n = 0; $n <= 99; $n++) {
-		for ($v = 0; $v <= 99; $v++) {
-			$ans = computer($input, $n, $v);
+		$ans = computer($input, $n, 0);
 
-			if ($ans == 19690720) {
-				echo 'Part 2: 100 * ', $n, ' + ', $v, ' = ', (100 * $n + $v), "\n";
-				die();
+		if ($ans > 19690720) {
+			for ($v = 0; $v <= 99; $v++) {
+				$ans = computer($input, ($n - 1), $v);
+
+				if ($ans == 19690720) {
+					echo 'Part 2: 100 * ', ($n - 1), ' + ', $v, ' = ', (100 * ($n - 1) + $v), "\n";
+					die();
+				}
 			}
 		}
 	}
