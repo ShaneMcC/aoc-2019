@@ -82,25 +82,43 @@
 
 	echo 'Part 1: Best position is [', $bestX, ', ', $bestY, '] with: ', $bestVisible, ' visible.', "\n";
 
-	$x = $bestX;
-	$y = $bestY;
+	function getDestroyedPoint($map, $x, $y, $number) {
+		$myMap = $map;
 
-	$points = [];
+		while (true) {
+			$points = [];
+			// Get all visible asteroids
+			$visible = getVisibleAsteroids($myMap, $x, $y);
+			if (count($visible) == 0) { return FALSE; }
 
-	// Get all visible points
-	foreach (getVisibleAsteroids($map, $x, $y) as $p) {
-		$points[] = [atan2($x - $p[0], $y - $p[1]), [$x - $p[0], $y - $p[1]], $p];
+			foreach ($visible as $p) {
+				// atan2 value of the dx/fy from our center point lets us then
+				// sort these circularly. (Is that a word?)
+				$points[] = [atan2($x - $p[0], $y - $p[1]), [$x - $p[0], $y - $p[1]], $p];
+				$myMap[$p[1]][$p[0]] = '.'; // Destroy it.
+			}
+
+			if ($number > count($points)) {
+				// Skip this loop as we just destroyed the first circle entirely.
+				$number -= count($points);
+				continue;
+			}
+
+			// Sort them into an order around us using the atan2 value from above.
+			usort($points, function ($a, $b) {
+		 		if ($a[0] == $b[0]) { return 0; }
+	    		return ($a[0] > $b[0]) ? -1 : 1;
+			});
+
+			// Find the most upright point (atan2 == 0)
+			foreach ($points as $k => $v) { if ($v[0] == 0) { break; } }
+
+			$wanted = $points[($k + $number - 1) % count($points)];
+			break;
+		}
+
+		return $wanted;
 	}
 
-	// Sort using atan
-	usort($points, function ($a, $b) {
- 		if ($a[0] == $b[0]) { return 0; }
-    	return ($a[0] > $b[0]) ? -1 : 1;
-	});
-
-	// Find the most upright point (atan2 == 0)
-	foreach ($points as $k => $v) { if ($v[0] == 0) { break; } }
-
-	$wanted = $points[($k + 199) % count($points)];
-
+	$wanted = getDestroyedPoint($map, $bestX, $bestY, 200);;
 	echo 'Part 2: 200th asteroid destroyed is [', $wanted[2][0], ', ', $wanted[2][1], '] value: ', ($wanted[2][0] * 100 + $wanted[2][1]), '.', "\n";
