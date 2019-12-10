@@ -1,5 +1,11 @@
 #!/usr/bin/php
 <?php
+	$__CLI['long'] = ['draw1', 'draw2', 'draw'];
+	$__CLI['extrahelp'] = [];
+	$__CLI['extrahelp'][] = '      --draw1              Draw visible points for part 1.';
+	$__CLI['extrahelp'][] = '      --draw2              Draw laser show for part 2.';
+	$__CLI['extrahelp'][] = '      --draw               Draw both parts.';
+
 	require_once(dirname(__FILE__) . '/../common/common.php');
 	$input = getInputLines();
 	$asteroids = [];
@@ -12,6 +18,10 @@
 		}
 		$y++;
 	}
+
+	// Save incase we want to draw the map.
+	$width = $x-1;
+	$height = $y-1;
 
 	function getAngle($fromX, $fromY, $destX, $destY) {
 		$dx = $fromX - $destX;
@@ -44,12 +54,13 @@
 		return array_values($angles);
 	}
 
-	$bestX = $bestY = $bestVisible = 0;
+	$bestX = $bestY = 0;
+	$bestVisible = [];
 	foreach ($asteroids as $y => $row) {
 		foreach (array_keys($row) as $x) {
 
-			$visible = count(getVisibleAsteroids($asteroids, $x, $y));
-			if ($visible > $bestVisible) {
+			$visible = getVisibleAsteroids($asteroids, $x, $y);
+			if (count($visible) > count($bestVisible)) {
 				$bestVisible = $visible;
 				$bestX = $x;
 				$bestY = $y;
@@ -57,7 +68,18 @@
 		}
 	}
 
-	echo 'Part 1: Best position is [', $bestX, ', ', $bestY, '] with: ', $bestVisible, ' visible.', "\n";
+	echo 'Part 1: Best position is [', $bestX, ', ', $bestY, '] with: ', count($bestVisible), ' visible.', "\n";
+
+	if (isset($__CLIOPTS['draw']) || isset($__CLIOPTS['draw1'])) {
+		$highlightVisibleAsteroids = $asteroids;
+		$highlightVisibleAsteroids[$bestY][$bestX] = "\033[0;32m" . '#' . "\033[0m";
+		foreach ($bestVisible as $v) {
+			$highlightVisibleAsteroids[$v[1]][$v[0]] = "\033[1;31m" . '#' . "\033[0m";
+		}
+
+
+		drawMap($highlightVisibleAsteroids, true, false);
+	}
 
 	function getDestroyedPoints($asteroids, $x, $y) {
 		$myAsteroids = $asteroids;
@@ -96,3 +118,7 @@
 	$wanted = $destroyedPoints[$wantedPoint - 1];
 
 	echo 'Part 2: Destroyed asteroid #', $wantedPoint, ' is [', $wanted[1][0], ', ', $wanted[1][1], '] with value: ', ($wanted[1][0] * 100 + $wanted[1][1]), '.', "\n";
+
+	if (isset($__CLIOPTS['draw']) || isset($__CLIOPTS['draw2'])) {
+		drawLaserShow($asteroids, $bestX, $bestY, $destroyedPoints);
+	}
