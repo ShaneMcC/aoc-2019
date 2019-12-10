@@ -68,7 +68,6 @@
 		return $visible;
 	}
 
-
 	$bestX = $bestY = $bestVisible = 0;
 	foreach (yieldXY(0, 0, count($map[0]), count($map), false) as $x => $y) {
 		if ($map[$y][$x] == '.') { continue; }
@@ -82,3 +81,26 @@
 	}
 
 	echo 'Part 1: Best position is [', $bestX, ', ', $bestY, '] with: ', $bestVisible, ' visible.', "\n";
+
+	$x = $bestX;
+	$y = $bestY;
+
+	$points = [];
+
+	// Get all visible points
+	foreach (getVisibleAsteroids($map, $x, $y) as $p) {
+		$points[] = [atan2($x - $p[0], $y - $p[1]), [$x - $p[0], $y - $p[1]], $p];
+	}
+
+	// Sort using atan
+	usort($points, function ($a, $b) {
+ 		if ($a[0] == $b[0]) { return 0; }
+    	return ($a[0] > $b[0]) ? -1 : 1;
+	});
+
+	// Find the most upright point (atan2 == 0)
+	foreach ($points as $k => $v) { if ($v[0] == 0) { break; } }
+
+	$wanted = $points[($k + 199) % count($points)];
+
+	echo 'Part 2: 200th asteroid destroyed is [', $wanted[2][0], ', ', $wanted[2][1], '] value: ', ($wanted[2][0] * 100 + $wanted[2][1]), '.', "\n";
