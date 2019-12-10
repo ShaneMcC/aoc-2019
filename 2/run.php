@@ -20,17 +20,32 @@
 
 	if (isTest()) { die(); }
 
-	for ($n = 0; $n <= 99; $n++) {
-		$ans = computer($input, $n, 0);
+	function runPart2($input, $target, $naive = false) {
+		for ($n = 0; $n <= 99; $n++) {
+			// If we're brute forcing, pretend we found something to start
+			// testing verbs.
+			$ans = $naive ? ($target + 1) : computer($input, $n, 0);
 
-		if ($ans > 19690720) {
-			for ($v = 0; $v <= 99; $v++) {
-				$ans = computer($input, ($n - 1), $v);
+			if ($ans > $target) {
+				// If we're not brute forcing, we actually want to look at the
+				// previous Noun not this one.
+				$testN = $naive ? $n : $n - 1;
 
-				if ($ans == 19690720) {
-					echo 'Part 2: 100 * ', ($n - 1), ' + ', $v, ' = ', (100 * ($n - 1) + $v), "\n";
-					die();
+				for ($v = 0; $v <= 99; $v++) {
+					$ans = computer($input, $testN, $v);
+
+					if ($ans == $target) {
+						echo 'Part 2: 100 * ', $testN, ' + ', $v, ' = ', (100 * $testN + $v), "\n";
+						die();
+					}
 				}
 			}
 		}
 	}
+
+	// Run part2 twice, once abusing the properties of provided inputs
+	// (All values of N,<1 99> will be smaller than N+1,0).
+	runPart2($input, 19690720);
+
+	// If that fails, try the brute-force approach.
+	runPart2($input, 19690720, true);
