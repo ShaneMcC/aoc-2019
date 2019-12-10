@@ -44,7 +44,7 @@
 	}
 
 	// Run part2 twice, once abusing the properties of provided inputs
-	// (All values of N,<1 99> will be smaller than N+1,0).
+	// (All values of N,<0-99> will be smaller than N+1,0).
 	runPart2($input, 19690720);
 
 	// If that fails, try the brute-force approach.
