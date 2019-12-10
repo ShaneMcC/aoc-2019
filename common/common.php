@@ -479,7 +479,7 @@ PRESENT;
 					$buttons = "\033[1;30m";
 					$reset = "\033[0m";
 				} else {
-					$reset = $snow = $hat = $eyes = $nose = $arms = $buttons = '';
+					$reset = $name = $snow = $hat = $eyes = $nose = $arms = $buttons = '';
 				}
 
 				return <<<SNOWMAN
