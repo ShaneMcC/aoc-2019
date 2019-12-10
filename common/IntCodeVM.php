@@ -310,13 +310,43 @@
 			[$name, $argCount, $ins] = $this->getInstr($instr);
 
 			$args = array_slice($this->data, ($this->location + 1), $argCount);
-			$this->location += $argCount;
 
 			if ($this->debug) {
 				if (isset($this->miscData['pid'])) { echo sprintf('[PID: %2s] ', $this->miscData['pid']); }
-				echo sprintf('(%4s)   %-20s', $this->location, static::instrToString([$name . '{' . $next . '=>' . $instr . '/'. implode(',', $modes) . '}', $args])), "\n";
+
+				$out = '';
+
+				// Undecoded input.
+				$out .= sprintf('(%4s) ', $this->location);
+				$out .= sprintf('%s %s', $next, implode(' ', $args));
+
+				$out .= str_repeat(' ', max(5, (40 - strlen($out))));
+
+				// Decoded input.
+				$out .= sprintf(' |   %10s', $name);
+				for ($a = 0; $a < count($args); $a++) {
+					$out .= ' ';
+					$mode = isset($modes[$a]) ? $modes[$a] : 0;
+
+					if ($mode == 0) { $out .= '$'; }
+					else if ($mode == 1) { $out .= '='; }
+					else if ($mode == 2) { $out .= '~'; }
+
+					$val = $args[$a];
+					// if ($mode != 1) { $val .= ' (' . $this->getData($args[$a], $mode) . ')'; };
+
+					$out .= sprintf('%-10s', $val);
+				}
+
+
+
+				echo $out, "\n";
+
+				// echo sprintf('(%4s)   %-20s', $this->location, static::instrToString([$name . '{' . $next . '=>' . $instr . '/'. implode(',', $modes) . '}', $args])), "\n";
 				usleep($this->sleep);
 			}
+
+			$this->location += $argCount;
 
 			$ins($this, $args, $modes);
 		}
