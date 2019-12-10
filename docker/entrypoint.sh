@@ -22,6 +22,11 @@ while [ "${1}" != "" ]; do
 	shift
 done
 
+if [ "${DAY}" == "test" ]; then
+	/code/test.sh
+	exit ${?}
+fi;
+
 if ! [[ "${DAY}" =~ ^[0-9]+$ ]]; then
 	echo 'Invalid Day: '${DAY};
 	exit 1;

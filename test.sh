@@ -2,6 +2,8 @@
 
 cd "$(dirname "$0")"
 
+EXIT=0;
+
 for DAY in `seq 1 25`; do
 	if [ -e ${DAY} ]; then
 		echo -n "Day ${DAY}:"
@@ -14,15 +16,18 @@ for DAY in `seq 1 25`; do
 			fi;
 
 			RESULT=$(${DAY}/run.php 2>/dev/null | grep -Pzl "(?s).*${PART1}.*\n.*${PART2}.*")
-			# RESULT=$(./docker.sh ${DAY} 2>/dev/null | grep -Pzl "(?s).*${PART1}.*\n.*${PART2}.*")
 
 			if [ "${RESULT}" = "" ]; then
 				echo -e "\033[1;31m" "Fail." "\033[0m";
+				EXIT=1;
 			else
 				echo -e "\033[0;32m" "Success." "\033[0m";
 			fi;
 		else
 			echo -e "\033[1;31m" "Untested." "\033[0m";
+			EXIT=2;
 		fi;
 	fi;
 done;
+
+exit ${EXIT}
