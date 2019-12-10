@@ -2,90 +2,77 @@
 <?php
 	require_once(dirname(__FILE__) . '/../common/common.php');
 	$input = getInputLines();
-	$map = [];
-	foreach ($input as $line) { $map[] = str_split($line); }
+	$asteroids = [];
+	$y = 0;
+	foreach ($input as $line) {
+		$x = 0;
+		foreach (str_split($line) as $cell) {
+			if ($cell == '#') { $asteroids[$y][$x] = true; }
+			$x++;
+		}
+		$y++;
+	}
 
-	// Check if 3 points are all in a line from each other.
-	function inLine($fromX, $fromY, $destX, $destY, $x, $y) {
+	function getAngle($fromX, $fromY, $destX, $destY) {
 		$dx = $fromX - $destX;
 		$dy = $fromY - $destY;
-		$pDX = $fromX - $x;
-		$pDY = $fromY - $y;
 
-		return atan2($dx, $dy) == atan2($pDX, $pDY);
+		return atan2($dx, $dy);
 	}
 
-	// Get all intermediate points between 2 points
-	function getPointBetween($fromX, $fromY, $destX, $destY) {
-		$points = [];
-
-		foreach (yieldXY(min($fromX, $destX), min($fromY, $destY), max($fromX, $destX), max($fromY, $destY), true) as $x => $y) {
-			if ($x == $fromX && $y == $fromY) { continue; }
-			if ($x == $destX && $y == $destY) { continue; }
-
-			if (inLine($fromX, $fromY, $destX, $destY, $x, $y)) {
-				$points[] = [$x, $y];
-			}
-		}
-
-		return $points;
-	}
-
-	function getVisibleAsteroids($map, $x, $y) {
+	function getVisibleAsteroids($asteroids, $x, $y) {
 		$visible = [];
 
-		foreach (yieldXY(0, 0, count($map[0]), count($map), false) as $x2 => $y2) {
-			if ($x2 == $x && $y2 == $y) { continue; }
+		$angles = [];
 
-			if ($map[$y2][$x2] != '.') {
-				$isVisible = true;
+		foreach ($asteroids as $y2 => $row) {
+			foreach (array_keys($row) as $x2) {
+				if ($y2 == $y && $x2 == $x) { continue; }
+				$angle = ''.getAngle($x, $y, $x2, $y2);
 
-				// Get all the points between these 2.
-				$points = getPointBetween($x, $y, $x2, $y2);
-
-				// Check if all of them are blank, if they are then we have
-				// visibility between these 2.
-				foreach ($points as $p) {
-					$isVisible &= ($map[$p[1]][$p[0]] == '.');
-				}
-
-				if ($isVisible) {
-					$visible[] = [$x2, $y2];
+				if (!isset($angles[$angle])) {
+					$angles[$angle] = [$x2, $y2];
+				} else {
+					[$aX, $aY] = $angles[$angle];
+					if (manhattan($x, $y, $x2, $y2) < manhattan($x, $y, $aX, $aY)) {
+						$angles[$angle] = [$x2, $y2];
+					}
 				}
 			}
 		}
 
-		return $visible;
+		return array_values($angles);
 	}
 
 	$bestX = $bestY = $bestVisible = 0;
-	foreach (yieldXY(0, 0, count($map[0]), count($map), false) as $x => $y) {
-		if ($map[$y][$x] == '.') { continue; }
+	foreach ($asteroids as $y => $row) {
+		foreach (array_keys($row) as $x) {
 
-		$visible = count(getVisibleAsteroids($map, $x, $y));
-		if ($visible > $bestVisible) {
-			$bestVisible = $visible;
-			$bestX = $x;
-			$bestY = $y;
+			$visible = count(getVisibleAsteroids($asteroids, $x, $y));
+			if ($visible > $bestVisible) {
+				$bestVisible = $visible;
+				$bestX = $x;
+				$bestY = $y;
+			}
 		}
 	}
 
 	echo 'Part 1: Best position is [', $bestX, ', ', $bestY, '] with: ', $bestVisible, ' visible.', "\n";
 
-	function getDestroyedPoint($map, $x, $y, $number) {
-		$myMap = $map;
+	function getDestroyedPoint($asteroids, $x, $y, $number) {
+		$myAsteroids = $asteroids;
 
 		while (true) {
 			$points = [];
 			// Get all visible asteroids
-			$visible = getVisibleAsteroids($myMap, $x, $y);
+			$visible = getVisibleAsteroids($myAsteroids, $x, $y);
 			if (count($visible) == 0) { return FALSE; }
 
 			foreach ($visible as $p) {
 				// atan2 value of the dx/fy from our center point lets us then
 				// sort these circularly. (Is that a word?)
-				$points[] = [atan2($x - $p[0], $y - $p[1]), [$x - $p[0], $y - $p[1]], $p];
-				$myMap[$p[1]][$p[0]] = '.'; // Destroy it.
+				$points[] = [getAngle($x, $y, $p[0], $p[1]), $p];
+				unset($myAsteroids[$p[1]][$p[0]]);
 			}
 
 			if ($number > count($points)) {
@@ -110,5 +97,5 @@
 		return $wanted;
 	}
 
-	$wanted = getDestroyedPoint($map, $bestX, $bestY, 200);;
-	echo 'Part 2: 200th asteroid destroyed is [', $wanted[2][0], ', ', $wanted[2][1], '] value: ', ($wanted[2][0] * 100 + $wanted[2][1]), '.', "\n";
+	$wanted = getDestroyedPoint($asteroids, $bestX, $bestY, 200);
+	echo 'Part 2: 200th asteroid destroyed is [', $wanted[1][0], ', ', $wanted[1][1], '] value: ', ($wanted[1][0] * 100 + $wanted[1][1]), '.', "\n";
