@@ -5,25 +5,14 @@
 	$map = [];
 	foreach ($input as $line) { $map[] = str_split($line); }
 
-	// I have no idea if this is correct.
-	// It does stuff and decides if a point is in line or not and seems to work
-	// but I suck at maths and don't fully know what I've coded here. :D
-	//
-	// Something like if the differences between our source and dest points and
-	// source and mid-points are the same, they're probably in line?
+	// Check if 3 points are all in a line from each other.
 	function inLine($fromX, $fromY, $destX, $destY, $x, $y) {
-		// Avoid div/0 errors.
-		if ($fromX == $destX) { return ($fromX == $x); }
-		if ($fromY == $destY) { return ($fromY == $y); }
-		if ($fromX == $x) { return ($fromX == $destX); }
-		if ($fromY == $y) { return ($fromY == $destY); }
-
 		$dx = $fromX - $destX;
 		$dy = $fromY - $destY;
 		$pDX = $fromX - $x;
 		$pDY = $fromY - $y;
 
-		return (abs($dx/$dy) == abs($pDX/$pDY)) && (abs($dy/$dx) == abs($pDY/$pDX));
+		return atan2($dx, $dy) == atan2($pDX, $pDY);
 	}
 
 	// Get all intermediate points between 2 points
@@ -53,6 +42,7 @@
 
 				// Get all the points between these 2.
 				$points = getPointBetween($x, $y, $x2, $y2);
+
 				// Check if all of them are blank, if they are then we have
 				// visibility between these 2.
 				foreach ($points as $p) {
