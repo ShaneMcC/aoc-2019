@@ -59,29 +59,23 @@
 
 	echo 'Part 1: Best position is [', $bestX, ', ', $bestY, '] with: ', $bestVisible, ' visible.', "\n";
 
-	function getDestroyedPoint($asteroids, $x, $y, $number) {
+	function getDestroyedPoints($asteroids, $x, $y) {
 		$myAsteroids = $asteroids;
 
+		$allPoints = [];
 		while (true) {
-			$points = [];
 			// Get all visible asteroids
 			$visible = getVisibleAsteroids($myAsteroids, $x, $y);
-			if (count($visible) == 0) { return FALSE; }
+			if (count($visible) == 0) { break; }
+
+			$points = [];
 
 			foreach ($visible as $p) {
-				// atan2 value of the dx/fy from our center point lets us then
-				// sort these circularly. (Is that a word?)
 				$points[] = [getAngle($x, $y, $p[0], $p[1]), $p];
 				unset($myAsteroids[$p[1]][$p[0]]);
 			}
 
-			if ($number > count($points)) {
-				// Skip this loop as we just destroyed the first circle entirely.
-				$number -= count($points);
-				continue;
-			}
-
-			// Sort them into an order around us using the atan2 value from above.
+			// Sort them into an order around us by angle.
 			usort($points, function ($a, $b) {
 		 		if ($a[0] == $b[0]) { return 0; }
 	    		return ($a[0] > $b[0]) ? -1 : 1;
@@ -90,12 +84,15 @@
 			// Find the most upright point (atan2 == 0)
 			foreach ($points as $k => $v) { if ($v[0] == 0) { break; } }
 
-			$wanted = $points[($k + $number - 1) % count($points)];
-			break;
+			$allPoints = array_merge($allPoints, array_splice($points, $k), array_splice($points, 0, $k));
 		}
 
-		return $wanted;
+		return $allPoints;
 	}
 
-	$wanted = getDestroyedPoint($asteroids, $bestX, $bestY, 200);
-	echo 'Part 2: 200th asteroid destroyed is [', $wanted[1][0], ', ', $wanted[1][1], '] value: ', ($wanted[1][0] * 100 + $wanted[1][1]), '.', "\n";
+	$destroyedPoints = getDestroyedPoints($asteroids, $bestX, $bestY);
+
+	$wantedPoint = 200;
+	$wanted = $destroyedPoints[$wantedPoint - 1];
+
+	echo 'Part 2: Destroyed asteroid #', $wantedPoint, ' is [', $wanted[1][0], ', ', $wanted[1][1], '] with value: ', ($wanted[1][0] * 100 + $wanted[1][1]), '.', "\n";
