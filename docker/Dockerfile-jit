@@ -2,6 +2,8 @@ FROM keinos/php8-jit
 
 ADD entrypoint.sh /entrypoint.sh
 
+USER root
+
 RUN apk add --no-cache bash && \
     chmod +x /entrypoint.sh && \
     chown -R nobody:nobody /entrypoint.sh
