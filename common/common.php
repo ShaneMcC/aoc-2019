@@ -171,6 +171,27 @@
 	}
 
 	/**
+	 * Get the bounding box of a standard $grid[$y][$x] array.
+	 * $grid may be sparsely populated.
+	 *
+	 * @param $grid Input grid.
+	 * @return [$minX, $minY, $maxX, $maxY]
+	 */
+	function getBoundingBox($map) {
+		$minX = $minY = $maxX = $maxY = 0;
+		foreach ($map as $y => $row) {
+			$minY = min($minY, $y);
+			$maxY = max($maxY, $y);
+			foreach ($row as $x => $colour) {
+				$minX = min($minX, $x);
+				$maxX = max($maxX, $x);
+			}
+		}
+
+		return [$minX, $minY, $maxX, $maxY];
+	}
+
+	/**
 	 * Get all the permutations of an array of items.
 	 * (From: http://stackoverflow.com/a/13194803/310353)
 	 *
