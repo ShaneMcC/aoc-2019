@@ -51,7 +51,7 @@
 			}
 		}
 
-		return array_values($angles);
+		return $angles;
 	}
 
 	$bestX = $bestY = 0;
@@ -59,7 +59,7 @@
 	foreach ($asteroids as $y => $row) {
 		foreach (array_keys($row) as $x) {
 
-			$visible = getVisibleAsteroids($asteroids, $x, $y);
+			$visible = array_values(getVisibleAsteroids($asteroids, $x, $y));
 			if (count($visible) > count($bestVisible)) {
 				$bestVisible = $visible;
 				$bestX = $x;
@@ -92,8 +92,8 @@
 
 			$points = [];
 
-			foreach ($visible as $p) {
-				$points[] = [getAngle($x, $y, $p[0], $p[1]), $p];
+			foreach ($visible as $a => $p) {
+				$points[] = [$a, $p];
 				unset($myAsteroids[$p[1]][$p[0]]);
 			}
 
