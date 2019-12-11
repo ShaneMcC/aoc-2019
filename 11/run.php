@@ -4,21 +4,23 @@
 	require_once(dirname(__FILE__) . '/../common/IntCodeVM.php');
 	$input = getInputLine();
 
-	$directions = ['^' => ['rotations' => ['<', '>'], 'movement' => ['x' => 0, 'y' => 1]],
+	$directions = ['^' => ['rotations' => ['<', '>'], 'movement' => ['x' => 0, 'y' => -1]],
 	               '>' => ['rotations' => ['^', 'v'], 'movement' => ['x' => 1, 'y' => 0]],
-	               'v' => ['rotations' => ['>', '<'], 'movement' => ['x' => 0, 'y' => -1]],
+	               'v' => ['rotations' => ['>', '<'], 'movement' => ['x' => 0, 'y' => 1]],
 	               '<' => ['rotations' => ['v', '^'], 'movement' => ['x' => -1, 'y' => 0]],
 	              ];
 
 
-	function paintHull($input) {
+	function paintHull($input, $startColour = '.') {
 		global $directions;
 
 		$map = [];
 		$x = $y = 0;
 		$direction = '^';
 
-$i = 0;
+		$map[$y][$x] = $startColour;
+
+// $i = 0;
 
 		$robot = new IntCodeVM(IntCodeVM::parseInstrLines($input));
 		$robot->setDebug(isDebug());
@@ -84,13 +86,6 @@ $i = 0;
 		return [$map];
 	}
 
-	$paintResult = paintHull($input)[0];
-
-	$part1 = 0;
-	foreach ($paintResult as $y => $row) {
-		$part1 += count($row);
-	}
-
 	function drawMap($painted) {
 		$minX = $minY = $maxX = $maxY = 0;
 		foreach ($painted as $y => $row) {
@@ -104,13 +99,23 @@ $i = 0;
 
 		$map = [];
 		foreach (yieldXY($minX, $minY, $maxX, $maxY, true) as $x => $y) {
-			$map[$y][$x] = '.';
+			$map[$y][$x] = ' ';
 			if (isset($painted[$y][$x])) {
-				$map[$y][$x] = $painted[$y][$x];
+				$map[$y][$x] = $painted[$y][$x] == '#' ? '█' : ' ';
 			}
 		}
 
 		foreach ($map as $row) { echo implode('', $row), "\n"; }
 	}
 
+	$paintResult = paintHull($input)[0];
+
+	$part1 = 0;
+	foreach ($paintResult as $y => $row) {
+		$part1 += count($row);
+	}
 	echo 'Part 1: ', $part1, "\n";
+
+	$paintResult = paintHull($input, '#')[0];
+	echo 'Part 2: ', "\n";
+	drawMap($paintResult);
