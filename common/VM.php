@@ -266,13 +266,15 @@
 			if (!$this->exited && isset($this->data[$this->location + 1])) {
 				$this->location++;
 
-				$optimise = $this->doReadAheads();
-				// If we optimised, assume we did something, and then we'll
-				// continue in he next step
-				if ($optimise !== false) {
-					// -1 because step() does ++
-					$this->location = $optimise - 1;
-					return TRUE;
+				if (!empty($this->readAheads)) {
+					$optimise = $this->doReadAheads();
+					// If we optimised, assume we did something, and then we'll
+					// continue in he next step
+					if ($optimise !== false) {
+						// -1 because step() does ++
+						$this->location = $optimise - 1;
+						return TRUE;
+					}
 				}
 
 				try {

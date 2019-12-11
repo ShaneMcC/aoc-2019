@@ -23,9 +23,9 @@
 			$this->instrs['1'] = ['ADD', 3, function($vm, $args, $modes = []) {
 				[$x, $y, $z] = $args;
 
-				$xMode = isset($modes[0]) ? $modes[0] : 0;
-				$yMode = isset($modes[1]) ? $modes[1] : 0;
-				$zMode = isset($modes[2]) ? $modes[2] : 0;
+				$xMode = $modes[0];
+				$yMode = $modes[1];
+				$zMode = $modes[2];
 
 				$vm->setData($z, ($vm->getData($x, $xMode) + $vm->getData($y, $yMode)), $zMode);
 			}];
@@ -43,9 +43,9 @@
 			$this->instrs['2'] = ['MUL', 3, function($vm, $args, $modes = []) {
 				[$x, $y, $z] = $args;
 
-				$xMode = isset($modes[0]) ? $modes[0] : 0;
-				$yMode = isset($modes[1]) ? $modes[1] : 0;
-				$zMode = isset($modes[2]) ? $modes[2] : 0;
+				$xMode = $modes[0];
+				$yMode = $modes[1];
+				$zMode = $modes[2];
 
 				$vm->setData($z, ($vm->getData($x, $xMode) * $vm->getData($y, $yMode)), $zMode);
 			}];
@@ -62,7 +62,7 @@
 			 */
 			$this->instrs['3'] = ['INPUT', 1, function($vm, $args, $modes = []) {
 				[$z] = $args;
-				$zMode = isset($modes[0]) ? $modes[0] : 0;
+				$zMode = $modes[0];
 
 				$input = $vm->getInput();
 				if ($input !== NULL) {
@@ -85,7 +85,7 @@
 			$this->instrs['4'] = ['OUTPUT', 1, function($vm, $args, $modes = []) {
 				[$z] = $args;
 
-				$zMode = isset($modes[0]) ? $modes[0] : 0;
+				$zMode = $modes[0];
 
 				$vm->appendOutput($vm->getData($z, $zMode));
 			}];
@@ -106,8 +106,8 @@
 			$this->instrs['5'] = ['JMPTRUE', 2, function($vm, $args, $modes = []) {
 				[$x, $y] = $args;
 
-				$xMode = isset($modes[0]) ? $modes[0] : 0;
-				$yMode = isset($modes[1]) ? $modes[1] : 0;
+				$xMode = $modes[0];
+				$yMode = $modes[1];
 
 				if ($vm->getData($x, $xMode) != 0) {
 					$vm->jump($vm->getData($y, $yMode));
@@ -129,8 +129,8 @@
 			$this->instrs['6'] = ['JMPFALSE', 2, function($vm, $args, $modes = []) {
 				[$x, $y] = $args;
 
-				$xMode = isset($modes[0]) ? $modes[0] : 0;
-				$yMode = isset($modes[1]) ? $modes[1] : 0;
+				$xMode = $modes[0];
+				$yMode = $modes[1];
 
 				if ($vm->getData($x, $xMode) == 0) {
 					$vm->jump($vm->getData($y, $yMode));
@@ -152,9 +152,9 @@
 			$this->instrs['7'] = ['LESSTHAN', 3, function($vm, $args, $modes = []) {
 				[$x, $y, $z] = $args;
 
-				$xMode = isset($modes[0]) ? $modes[0] : 0;
-				$yMode = isset($modes[1]) ? $modes[1] : 0;
-				$zMode = isset($modes[2]) ? $modes[2] : 0;
+				$xMode = $modes[0];
+				$yMode = $modes[1];
+				$zMode = $modes[2];
 
 				if ($vm->getData($x, $xMode) < $vm->getData($y, $yMode)) {
 					$vm->setData($z, 1, $zMode);
@@ -178,9 +178,9 @@
 			$this->instrs['8'] = ['EQUALS', 3, function($vm, $args, $modes = []) {
 				[$x, $y, $z] = $args;
 
-				$xMode = isset($modes[0]) ? $modes[0] : 0;
-				$yMode = isset($modes[1]) ? $modes[1] : 0;
-				$zMode = isset($modes[2]) ? $modes[2] : 0;
+				$xMode = $modes[0];
+				$yMode = $modes[1];
+				$zMode = $modes[2];
 
 				if ($vm->getData($x, $xMode) == $vm->getData($y, $yMode)) {
 					$vm->setData($z, 1, $zMode);
@@ -204,7 +204,7 @@
 			$this->instrs['9'] = ['ADJRELBASE', 1, function($vm, $args, $modes = []) {
 				[$x] = $args;
 
-				$xMode = isset($modes[0]) ? $modes[0] : 0;
+				$xMode = $modes[0];
 
 				$vm->setRelativeBase($vm->getRelativeBase() + $vm->getData($x, $xMode));
 			}];
@@ -305,7 +305,11 @@
 			$next = $this->data[$this->location];
 
 			$instr = $next % 100;
-			$modes = array_reverse(str_split(substr($next, 0, -2)));
+			// $modes = array_reverse(str_split(substr($next, 0, -2)));
+			$modes = [($next / 100) % 10,
+				      ($next / 1000) % 10,
+				      ($next / 10000) % 10,
+				     ];
 
 			[$name, $argCount, $ins] = $this->getInstr($instr);
 
