@@ -1,5 +1,10 @@
 #!/usr/bin/php
 <?php
+	$__CLI['long'] = ['draw1'];
+	$__CLI['extrahelp'] = [];
+	$__CLI['extrahelp'][] = '      --draw1              Draw visible points for part 1.';
+
+
 	require_once(dirname(__FILE__) . '/../common/common.php');
 	require_once(dirname(__FILE__) . '/../common/IntCodeVM.php');
 	require_once(dirname(__FILE__) . '/../common/decodeText.php');
@@ -12,7 +17,7 @@
 	              ];
 
 
-	function paintHull($input, $startColour = '.') {
+	function paintHull($input, $startColour = 0) {
 		global $directions;
 
 		$map = [];
@@ -39,16 +44,9 @@
 					if (isDebug()) { echo 'Painting: [', $x, ', ', $y, '] in ', $colour, "\n"; }
 
 					// Paint
-					if ($colour == '0') {
-						// Black
-						$map[$y][$x] = '.';
-					} else if ($colour == '1') {
-						// White
-						$map[$y][$x] = '#';
-					}
+					$map[$y][$x] = $colour;
 
 					// Handle movement.
-
 					if (isDebug()) { echo 'Rotating ', $rotation, ' from: [', $direction, ']', "\n"; }
 					// Set our new direction:
 					$direction = $directions[$direction]['rotations'][$rotation];
@@ -62,19 +60,12 @@
 			} catch (Exception $ex) {
 				// Robot wants input.
 				if (isset($map[$y][$x])) {
-					if ($map[$y][$x] == '.') {
-						// Black
-						$robot->appendInput(0);
-						if (isDebug()) { echo 'Robot is above black.', "\n"; }
-					} else if ($map[$y][$x] == '#') {
-						// White
-						$robot->appendInput(1);
-						if (isDebug()) { echo 'Robot is above white.', "\n"; }
-					}
+					$robot->appendInput($map[$y][$x]);
+					if (isDebug()) { echo 'Robot is above ', $map[$y][$x], "\n"; }
 				} else {
 					// Default black
 					$robot->appendInput(0);
-					if (isDebug()) { echo 'Robot is above default black.', "\n"; }
+					if (isDebug()) { echo 'Robot is above default 0.', "\n"; }
 				}
 			}
 		}
@@ -89,7 +80,7 @@
 		foreach (yieldXY($minX + $offsetX, $minY + $offsetY, $maxX, $maxY, true) as $x => $y) {
 			$map[$y][$x] = $black;
 			if (isset($painted[$y][$x])) {
-				$map[$y][$x] = $painted[$y][$x] == '#' ? $white : $black;
+				$map[$y][$x] = $painted[$y][$x] == 1 ? $white : $black;
 			}
 		}
 
@@ -106,7 +97,10 @@
 	$part1 = 0;
 	foreach ($paintResult as $y => $row) { $part1 += count($row); }
 	echo 'Part 1: ', $part1, "\n";
+	if (isset($__CLIOPTS['draw1'])) {
+		drawMap($paintResult);
+	}
 
-	$paintResult = paintHull($input, '#')[0];
+	$paintResult = paintHull($input, 1)[0];
 	echo 'Part 2: ', decodeText(flattenMap($paintResult, '1', '0', 0, 1)), "\n";
 	drawMap($paintResult);
