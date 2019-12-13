@@ -64,7 +64,7 @@
 		foreach (['x', 'y', 'z'] as $c) {
 			$state = [];
 			foreach ($moons as $moon) {
-				$state[] = [$moon['pos'][$c], $moon['vel'][$c]];
+				$state[] = [$moon['vel'][$c]];
 			}
 
 			$states[$c] = $state;
@@ -90,7 +90,7 @@
 		foreach ($checkStates as $c => $checkState) {
 			if (isset($loopTime[$c])) { continue; }
 			if ($checkState === $initialState[$c]) {
-				$loopTime[$c] = $i;
+				$loopTime[$c] = $i * 2;
 			}
 		}
 
