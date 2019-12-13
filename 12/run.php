@@ -59,9 +59,59 @@
 	}
 
 
-	$part1 = $moons;
-	for ($i = 0; $i < 1000; $i++) {
-		$part1 = simulate($part1);
+	function getStates($moons) {
+		$states = [];
+		foreach (['x', 'y', 'z'] as $c) {
+			$state = [];
+			foreach ($moons as $moon) {
+				$state[] = [$moon['pos'][$c], $moon['vel'][$c]];
+			}
+
+			$states[$c] = $state;
+		}
+
+		return $states;
 	}
 
-	echo 'Part 1: ', getEnergy($part1), "\n";
+	$initialState = getStates($moons);
+
+	$i = 0;
+	$loopTime = [];
+	while (true) {
+		$i++;
+		$moons = simulate($moons);
+
+		if ($i == 1000) {
+			echo 'Part 1: ', getEnergy($moons), "\n";
+		}
+
+		$checkStates = getStates($moons);
+
+		foreach ($checkStates as $c => $checkState) {
+			if (isset($loopTime[$c])) { continue; }
+			if ($checkState === $initialState[$c]) {
+				$loopTime[$c] = $i;
+			}
+		}
+
+		if ($i > 1000 && count($loopTime) == 3) { break; }
+	}
+
+	// LCM and GCD from https://stackoverflow.com/questions/147515/least-common-multiple-for-3-or-more-numbers
+	function gcd($a, $b){
+		$t = 0;
+		while ($b != 0){
+			$t = $b;
+			$b = $a % $b;
+			$a = $t;
+		}
+
+		return $a;
+	}
+
+	function lcm($a, $b){
+		return ($a * $b / gcd($a, $b));
+	}
+
+	$part2 = lcm($loopTime['x'], lcm($loopTime['y'], $loopTime['z']));
+	echo 'Part 2: ', $part2, "\n";
