@@ -10,27 +10,23 @@
 		$moons[] = ['pos' => ['x' => (int)$x, 'y' => (int)$y, 'z' => (int)$z], 'vel' => ['x' => 0, 'y' => 0, 'z' => 0]];
 	}
 
-	function simulate($moons) {
+	function simulate($moons, $axis) {
 		// Calculate Velocity
 		for ($a = 0; $a < count($moons); $a++) {
 			for ($b = $a + 1; $b < count($moons); $b++) {
-				foreach (['x', 'y', 'z'] as $c) {
-					if ($moons[$a]['pos'][$c] > $moons[$b]['pos'][$c]) {
-						$moons[$a]['vel'][$c]--;
-						$moons[$b]['vel'][$c]++;
-					} else if ($moons[$a]['pos'][$c] < $moons[$b]['pos'][$c]) {
-						$moons[$a]['vel'][$c]++;
-						$moons[$b]['vel'][$c]--;
-					}
+				if ($moons[$a]['pos'][$axis] > $moons[$b]['pos'][$axis]) {
+					$moons[$a]['vel'][$axis]--;
+					$moons[$b]['vel'][$axis]++;
+				} else if ($moons[$a]['pos'][$axis] < $moons[$b]['pos'][$axis]) {
+					$moons[$a]['vel'][$axis]++;
+					$moons[$b]['vel'][$axis]--;
 				}
 			}
 		}
 
 		// Move based on velocity
 		for ($i = 0; $i < count($moons); $i++) {
-			foreach (['x', 'y', 'z'] as $c) {
-				$moons[$i]['pos'][$c] += $moons[$i]['vel'][$c];
-			}
+			$moons[$i]['pos'][$axis] += $moons[$i]['vel'][$axis];
 		}
 
 		return $moons;
@@ -58,43 +54,31 @@
 		return $energy;
 	}
 
-
-	function getStates($moons) {
-		$states = [];
-		foreach (['x', 'y', 'z'] as $c) {
-			$state = [];
-			foreach ($moons as $moon) {
-				$state[] = [$moon['vel'][$c]];
-			}
-
-			$states[$c] = $state;
+	function getVelocities($moons, $axis) {
+		$state = [];
+		foreach ($moons as $moon) {
+			$state[] = $moon['vel'][$axis];
 		}
 
-		return $states;
+		return $state;
 	}
 
-	$initialState = getStates($moons);
-
-	$i = 0;
 	$loopTime = [];
-	while (true) {
-		$i++;
-		$moons = simulate($moons);
+	$initialState = getVelocities($moons, 'x');
+	for ($i = 1 ;; $i++) {
+		foreach (['x', 'y', 'z'] as $axis) {
+			$moons = simulate($moons, $axis);
+			if (isset($loopTime[$axis])) { continue; }
+
+			if (getVelocities($moons, $axis) == $initialState) {
+				$loopTime[$axis] = $i * 2;
+			}
+		}
+		if ($i > 1000 && count($loopTime) == 3) { break; }
 
 		if ($i == 1000) {
 			echo 'Part 1: ', getEnergy($moons), "\n";
 		}
-
-		$checkStates = getStates($moons);
-
-		foreach ($checkStates as $c => $checkState) {
-			if (isset($loopTime[$c])) { continue; }
-			if ($checkState === $initialState[$c]) {
-				$loopTime[$c] = $i * 2;
-			}
-		}
-
-		if ($i > 1000 && count($loopTime) == 3) { break; }
 	}
 
 	// LCM and GCD from https://stackoverflow.com/questions/147515/least-common-multiple-for-3-or-more-numbers
