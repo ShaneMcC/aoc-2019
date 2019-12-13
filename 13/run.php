@@ -121,7 +121,7 @@
 		drawMap($drawResult);
 	}
 
-	$draw = (isset($__CLIOPTS['draw1']) || isset($__CLIOPTS['draw']));
+	$draw = (isset($__CLIOPTS['draw2']) || isset($__CLIOPTS['draw']));
 	$gameResult = playGame($input, true, $draw);
 
 	echo 'Part 2: ', $gameResult[1], "\n";
