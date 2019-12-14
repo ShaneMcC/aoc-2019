@@ -22,7 +22,9 @@
 		$hadInput = false;
 
 		$ballX = -1;
+		$ballMoved = false;
 		$paddleX = -1;
+		$paddleMoved = false;
 
 		while (!$game->hasExited()) {
 			try {
@@ -42,8 +44,8 @@
 						$grid[$y][$x] = $type;
 					}
 
-					if ($type == 3) { $paddleX = $x; }
-					if ($type == 4) { $ballX = $x; }
+					if ($type == 3) { $paddleX = $x; $paddleMoved = true; }
+					if ($type == 4) { $ballX = $x; $ballMoved = true; }
 				}
 			} catch (Exception $ex) {
 				if ($ballX < $paddleX) { $input = -1; }
@@ -56,7 +58,7 @@
 				$hadInput = true;
 			}
 
-			if ($draw && $hadInput) {
+			if ($draw && $hadInput && ($paddleMoved || $ballMoved)) {
 				drawMap($grid, $score, true);
 			}
 		}
