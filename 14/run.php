@@ -61,7 +61,7 @@
 			$spare[$item] += ($produced - $count);
 		}
 
-		debugOut(str_repeat("\t", $indent), "\t", 'leaving: ', ($produced - $count), ' (now ', (isset($spare[$item]) ? $spare[$item] : 0), ') spare', "\n");
+		debugOut(str_repeat("\t", $indent), "\t", 'leaving: ', ($produced - $count), ' spare', "\n");
 
 		// Do the child reactions required.
 		foreach ($reactions[$item]['required'] as $ritem => $rcount) {
