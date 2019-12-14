@@ -77,19 +77,22 @@
 
 	echo 'Part 1: ', $part1, "\n";
 
-	function checkMaxFuel($reactions, $max = 1000000000000, $step = null, $start = 0) {
-		if ($step == null) { $step = $max / 10; }
+	function checkMaxFuel($reactions, $orePerFuel, $max = 1000000000000) {
+		$lower = floor($max / $orePerFuel);
+		$higher = $lower * 2;
 
-		for ($i = $start ;; $i += $step){
-			$react = requiredOre($reactions, 'FUEL', $i);
+		while ($lower != $higher - 1) {
+			$check = $lower + floor(($higher - $lower) / 2);
+			$react = requiredOre($reactions, 'FUEL', $check);
 			if ($react[0] > $max) {
-				$previous = $i - $step;
-				return ($step == 1) ? $previous : checkMaxFuel($reactions, $max, $step / 10, $previous);
+				$higher = $check;
+			} else if ($react[0] < $max) {
+				$lower = $check;
 			}
 		}
 
-		return 0;
+		return $lower;
 	}
 
-	$part2 = checkMaxFuel($reactions);
+	$part2 = checkMaxFuel($reactions, $part1);
 	echo 'Part 2: ', $part2, "\n";
