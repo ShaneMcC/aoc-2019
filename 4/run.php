@@ -21,7 +21,7 @@
 			// If we're lower than the previous, fail.
 			if ($pw[$i] < $pw[$i - 1]) {
 				// Skip ahead to the next possible password.
-				$next = substr($password, 0, $i) . $pw[$i - 1] . str_repeat(0, strlen($password) - $i - 1);
+				$next = substr($password, 0, $i) . $pw[$i - 1] . str_repeat($pw[$i - 1], strlen($password) - $i - 1);
 				return [false, false, $next];
 			}
 
