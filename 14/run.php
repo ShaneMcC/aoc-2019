@@ -117,3 +117,20 @@
 	$part1 = $react[0];
 
 	echo 'Part 1: ', $part1, "\n";
+
+	function checkMaxFuel($reactions, $max = 1000000000000, $step = null, $start = 0) {
+		if ($step == null) { $step = $max / 10; }
+
+		for ($i = $start ;; $i += $step){
+			$react = requiredOre($reactions, 'FUEL', $i);
+			if ($react[0] > $max) {
+				$previous = $i - $step;
+				return ($step == 1) ? $previous : checkMaxFuel($reactions, $max, $step / 10, $previous);
+			}
+		}
+
+		return 0;
+	}
+
+	$part2 = checkMaxFuel($reactions);
+	echo 'Part 2: ', $part2, "\n";
