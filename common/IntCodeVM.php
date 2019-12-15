@@ -27,7 +27,7 @@
 				$yMode = $modes[1];
 				$zMode = $modes[2];
 
-				$vm->setData($z, ($vm->getData($x, $xMode) + $vm->getData($y, $yMode)), $zMode);
+				return $vm->setData($z, ($vm->getData($x, $xMode) + $vm->getData($y, $yMode)), $zMode);
 			}];
 
 			/**
@@ -47,7 +47,7 @@
 				$yMode = $modes[1];
 				$zMode = $modes[2];
 
-				$vm->setData($z, ($vm->getData($x, $xMode) * $vm->getData($y, $yMode)), $zMode);
+				return $vm->setData($z, ($vm->getData($x, $xMode) * $vm->getData($y, $yMode)), $zMode);
 			}];
 
 			/**
@@ -66,7 +66,7 @@
 
 				$input = $vm->getInput();
 				if ($input !== NULL) {
-					$vm->setData($z, $input, $zMode);
+					return $vm->setData($z, $input, $zMode);
 				} else {
 					throw new Exception('No Input Available');
 				}
@@ -87,7 +87,7 @@
 
 				$zMode = $modes[0];
 
-				$vm->appendOutput($vm->getData($z, $zMode));
+				return $vm->appendOutput($vm->getData($z, $zMode));
 			}];
 
 
@@ -110,7 +110,7 @@
 				$yMode = $modes[1];
 
 				if ($vm->getData($x, $xMode) != 0) {
-					$vm->jump($vm->getData($y, $yMode));
+					return $vm->jump($vm->getData($y, $yMode));
 				}
 			}];
 
@@ -133,7 +133,7 @@
 				$yMode = $modes[1];
 
 				if ($vm->getData($x, $xMode) == 0) {
-					$vm->jump($vm->getData($y, $yMode));
+					return $vm->jump($vm->getData($y, $yMode));
 				}
 			}];
 
@@ -157,9 +157,9 @@
 				$zMode = $modes[2];
 
 				if ($vm->getData($x, $xMode) < $vm->getData($y, $yMode)) {
-					$vm->setData($z, 1, $zMode);
+					return $vm->setData($z, 1, $zMode);
 				} else {
-					$vm->setData($z, 0, $zMode);
+					return $vm->setData($z, 0, $zMode);
 				}
 			}];
 
@@ -183,9 +183,9 @@
 				$zMode = $modes[2];
 
 				if ($vm->getData($x, $xMode) == $vm->getData($y, $yMode)) {
-					$vm->setData($z, 1, $zMode);
+					return $vm->setData($z, 1, $zMode);
 				} else {
-					$vm->setData($z, 0, $zMode);
+					return $vm->setData($z, 0, $zMode);
 				}
 			}];
 
@@ -206,7 +206,7 @@
 
 				$xMode = $modes[0];
 
-				$vm->setRelativeBase($vm->getRelativeBase() + $vm->getData($x, $xMode));
+				return $vm->setRelativeBase($vm->getRelativeBase() + $vm->getData($x, $xMode));
 			}];
 
 			/**
@@ -219,14 +219,14 @@
 			 * @param $args Args for this instruction.
 			 */
 			$this->instrs['99'] = ['HALT', 0, function($vm, $args, $modes = []) {
-				$vm->end(0);
+				return $vm->end(0);
 			}];
 		}
 
 		// Turn output into a queue.
 		public function clearOutput() { $this->output = []; }
 		public function getOutputLength() { return count($this->output); }
-		public function appendOutput($value) { $this->output[] = $value; }
+		public function appendOutput($value) { $this->output[] = $value; if ($this->debug) { return 'Output value: ' . $value; } }
 		public function setOutput($value) { $this->output = is_array($value) ? $value : [$value]; }
 		public function getOutput() { return array_shift($this->output); }
 		public function getAllOutput() { return $this->output; }
@@ -244,7 +244,13 @@
 		// Relative Base
 		protected $relativeBase = 0;
 		public function getRelativeBase() { return $this->relativeBase; }
-		public function setRelativeBase($value) { $this->relativeBase = $value; }
+		public function setRelativeBase($value) { $this->relativeBase = $value; if ($this->debug) { return 'Relbase is now: ' . $value; } }
+
+		// Debugging for Jump.
+		function jump($loc) {
+			parent::jump($loc);
+			if ($this->debug) { return 'Jumping to: ' . $loc; }
+		}
 
 		// Reset also needs to reset our new input queue not just the output
 		// queue.
@@ -285,9 +291,11 @@
 
 			if ($mode == 0) {
 				$this->data[$loc] = $val;
+				if ($this->debug) { return '$' . $loc . ' is now: ' . $val; }
 				return;
 			} else if ($mode == 2) {
 				$this->data[$this->getRelativeBase() + $loc] = $val;
+				if ($this->debug) { return '$' . ($this->getRelativeBase() + $loc) . ' is now: ' . $val; }
 				return;
 			}
 
@@ -337,22 +345,25 @@
 					else if ($mode == 2) { $out .= '~'; }
 
 					$val = $args[$a];
-					// if ($mode != 1) { $val .= ' (' . $this->getData($args[$a], $mode) . ')'; };
+					if ($mode != 1) { $val .= ' (' . $this->getData($args[$a], $mode) . ')'; };
 
 					$out .= sprintf('%-10s', $val);
 				}
-
-
-
-				echo $out, "\n";
-
-				// echo sprintf('(%4s)   %-20s', $this->location, static::instrToString([$name . '{' . $next . '=>' . $instr . '/'. implode(',', $modes) . '}', $args])), "\n";
-				usleep($this->sleep);
 			}
 
 			$this->location += $argCount;
 
-			$ins($this, $args, $modes);
+			$ret = $ins($this, $args, $modes);
+
+			if ($this->debug) {
+				$out .= str_repeat(' ', max(5, (120 - strlen($out))));
+				$out .= ' | ';
+
+				$out .= $ret;
+
+				echo $out, "\n";
+				usleep($this->sleep);
+			}
 		}
 
 		/**
