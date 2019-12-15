@@ -86,7 +86,7 @@
 			$react = requiredOre($reactions, 'FUEL', $check);
 			if ($react[0] > $max) {
 				$higher = $check;
-			} else if ($react[0] < $max) {
+			} else {
 				$lower = $check;
 			}
 		}
