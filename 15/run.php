@@ -1,11 +1,14 @@
 #!/usr/bin/php
 <?php
-	$__CLI['long'] = ['draw1'];
+	$__CLI['long'] = ['draw1', 'draw2', 'draw'];
 	$__CLI['extrahelp'] = [];
-	$__CLI['extrahelp'][] = '      --draw1              Draw visible points for part 1.';
+	$__CLI['extrahelp'][] = '      --draw1              Draw visible map for part 1.';
+	$__CLI['extrahelp'][] = '      --draw2              Draw visible map for part 2.';
+	$__CLI['extrahelp'][] = '      --draw               Draw visible map for both parts.';
 
 	require_once(dirname(__FILE__) . '/../common/common.php');
 	require_once(dirname(__FILE__) . '/../common/IntCodeVM.php');
+	require_once(dirname(__FILE__) . '/../common/pathfinder.php');
 	$input = getInputLine();
 
 	$directions = ['1' => ['movement' => ['x' => 0, 'y' => -1]],
@@ -14,79 +17,82 @@
 	               '3' => ['movement' => ['x' => -1, 'y' => 0]],
 	              ];
 
-	function solve($input, $draw = false) {
+	function mapArea($input, $draw = false) {
 		global $directions;
 
 		$map = [];
-		$x = $y = 0;
-		$direction = null;
+		$map[0][0] = '1';
 
-		$map[$y][$x] = '1';
+		$oxygen = [];
 
 		$robot = new IntCodeVM(IntCodeVM::parseInstrLines($input));
+		$robot->setMiscData('x', 0);
+		$robot->setMiscData('y', 0);
+		$robots = [$robot];
 
-		while (!$robot->hasExited()) {
-			try {
-				$robot->step();
-				if ($robot->hasExited()) { break; }
+		while (!empty($robots)) {
+			foreach (array_keys($robots) as $key) {
+				$robot = $robots[$key];
+				$direction = $robot->getMiscData('direction');
+				$x = $robot->getMiscData('x');
+				$y = $robot->getMiscData('y');
 
-				// Wait until we have an output.
-				if ($robot->getOutputLength() == 1) {
-					$type = $robot->getOutput();
+				try {
+					$robot->step();
+					if ($robot->hasExited()) { unset($robots[$key]); continue; }
 
-					// Draw
-					$checkY = $y + $details['movement']['y'];
-					$checkX = $x + $details['movement']['x'];
+					if ($robot->getOutputLength() == 1) {
+						$type = $robot->getOutput();
 
-					$map[$checkY][$checkX] = $type;
-					if ($type != 0) {
-						$y = $checkY;
-						$x = $checkX;
-					} else {
-						$direction = null;
+						$checkY = $y + $directions[$direction]['movement']['y'];
+						$checkX = $x + $directions[$direction]['movement']['x'];
+
+						$map[$checkY][$checkX] = $type;
+						if ($type == 0) {
+							// Kill bots that hit a wall
+							unset($robots[$key]);
+						} else {
+							// Move the bot.
+							$robot->setMiscData('x', $checkX);
+							$robot->setMiscData('y', $checkY);
+						}
+
+						if ($type == 2) { $oxygen = [$x, $y]; }
+
+						if ($draw) { drawMap($map, [0,0]); }
 					}
 
-					if ($draw) { drawMap($map, [$x, $y]); }
+				} catch (Exception $ex) {
+					// Robot wants input, kill it and spawn replacements.
+					$state = $robot->saveState();
 
-					if ($type == 2) {
-						break;
+					// Robot current location.
+					$x = $robot->getMiscData('x');
+					$y = $robot->getMiscData('y');
+
+					// Kill this robot.
+					unset($robots[$key]);
+
+					// Create Replacements.
+					for ($i = 1; $i <= 4; $i++) {
+						// Only create replacements that are finding new things.
+						$checkY = $y + $directions[$i]['movement']['y'];
+						$checkX = $x + $directions[$i]['movement']['x'];
+						if (isset($map[$checkY][$checkX])) { continue; }
+
+						$r = new IntCodeVM();
+						$r->loadState($state);
+						$r->appendInput($i);
+						$r->setMiscData('direction', $i);
+						$r->setMiscData('x', $x);
+						$r->setMiscData('y', $y);
+						$robots[] = $r;
 					}
 				}
-			} catch (Exception $ex) {
-				// Robot wants input.
-
-				// If we don't have a direction to keep going, find something
-				// new.
-				if ($direction == null) {
-					foreach ($directions as $n => $details) {
-						$checkY = $y + $details['movement']['y'];
-						$checkX = $x + $details['movement']['x'];
-
-						if (!isset($map[$checkY][$checkX])) {
-							$direction = $n;
-							$moved = true;
-							break;
-						}
-					}
-
-					if ($direction == null) {
-						foreach ($directions as $n => $details) {
-							$checkY = $y + $details['movement']['y'];
-							$checkX = $x + $details['movement']['x'];
-
-							if (isset($map[$checkY][$checkX]) && $map[$checkY][$checkX] != '0') {
-								$direction = $n;
-								break;
-							}
-						}
-					}
-				}
-
-				$robot->appendInput($direction);
 			}
 		}
 
-		return $map;
+		return [$map, $oxygen];
 	}
 
 	function typeToSymbol($type) {
@@ -116,9 +122,11 @@
 		return $map;
 	}
 
-	function drawMap($inputMap, $loc) {
+	function drawMap($inputMap, $loc = null, $steps = []) {
 		$map = flattenMap($inputMap);
-		$map[$loc[1]][$loc[0]] = 'D';
+
+		if ($loc != null) { $map[$loc[1]][$loc[0]] = 'D'; }
+		foreach ($steps as $s) { $map[$s[1]][$s[0]] = 'x'; }
 
 		echo '┍', str_repeat('━', count($map[0])), '┑', "\n";
 		foreach ($map as $row) { echo '│', implode('', $row), '│', "\n"; }
@@ -126,11 +134,60 @@
 		echo "\n\n";
 	}
 
-	$map = solve($input, isset($__CLIOPTS['draw1']));
-	$part1 = 0;
-	foreach ($map as $row) {
-		$acv = array_count_values($row);
-		$part1 += isset($acv[1]) ? $acv[1] : 0;
+	function generateOxygen($map, $draw = false) {
+		$minutes = 0;
+
+		do {
+			$minutes++;
+
+			// Expand Oxygen.
+			$oldMap = $map;
+			foreach ($oldMap as $y => $row) {
+				foreach ($row as $x => $type) {
+					if ($oldMap[$y][$x] == 2) {
+						foreach ([[$x + 1, $y], [$x - 1, $y], [$x, $y + 1], [$x, $y - 1]] as $adj) {
+							if ($map[$adj[1]][$adj[0]] == 1) {
+								$map[$adj[1]][$adj[0]] = 2;
+							}
+						}
+					}
+				}
+			}
+
+			if ($draw) {
+				echo 'Minutes: ', $minutes, "\n";
+				drawMap($map);
+			}
+
+			$spaces = ['1' => 0, '2' => 0];
+			foreach ($map as $row) {
+				foreach (array_count_values($row) as $type => $count) {
+					if (isset($spaces[$type])) { $spaces[$type] += $count; }
+				}
+			}
+
+		} while ($spaces[1] > 0);
+
+		return $minutes;
 	}
 
+	$draw1 = isset($__CLIOPTS['draw1']) || isset($__CLIOPTS['draw']);
+	$draw2 = isset($__CLIOPTS['draw2']) || isset($__CLIOPTS['draw']);
+
+	[$map, $oxygen] = mapArea($input, $draw1);
+
+	$pf = new PathFinder($map, [0, 0], $oxygen);
+	$pf->setHook('isAccessible', function($state, $x, $y) {
+		return ($state['grid'][$y][$x] != '0');
+	});
+	$foo = $pf->solveMaze();
+
+	if ($draw1) {
+		drawMap($map, $oxygen, $foo[0]['previous']);
+	}
+	$part1 = $foo[0]['steps'] + 1;
+
 	echo 'Part 1: ', $part1, "\n";
+
+	$part2 = generateOxygen($map, $draw2);
+	echo 'Part 2: ', $part2, "\n";
