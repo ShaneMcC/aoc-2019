@@ -26,6 +26,9 @@
 		$paddleX = -1;
 		$paddleMoved = false;
 
+		$drawResult = NULL;
+		[$minX, $minY, $maxX, $maxY] = null;
+
 		while (!$game->hasExited()) {
 			try {
 				$game->step();
@@ -44,8 +47,32 @@
 						$grid[$y][$x] = $type;
 					}
 
-					if ($type == 3) { $paddleX = $x; $paddleMoved = true; }
-					if ($type == 4) { $ballX = $x; $ballMoved = true; }
+					if ($type == 3) { $paddleX = $x; }
+					if ($type == 4) { $ballX = $x; }
+
+					if ($draw && $drawResult != null) {
+						// Redraw bit of screen.
+						echo "\033[s"; // Store current cursor position
+
+						// Move to top left
+						echo "\033[" . $drawResult . "A"; // Back to top of screen
+						echo "\r"; // Start of line.
+
+						// Update screen.
+						if ($x == -1 && $y == 0) {
+							echo sprintf('Score: %-10s', $score); // Score.
+						} else {
+							echo "\033[" . ($y + 2). "B"; // Down Y (+border) lines.
+							echo "\033[" . ($x + 1) . "C"; // Right X (+border) lines.
+
+							echo typeToSymbol($type);
+						}
+
+						echo "\033[u"; // Revert cursor position
+
+						// Sleep for non-blanking display changes.
+						if ($type != 0) { usleep(25000); }
+					}
 				}
 			} catch (Exception $ex) {
 				if ($ballX < $paddleX) { $input = -1; }
@@ -54,16 +81,29 @@
 
 				$game->appendInput($input);
 
-				if ($draw) { drawMap($grid, $score, $hadInput); }
+				if ($draw && !$hadInput) { $drawResult = drawMap($grid, $score, false); }
 				$hadInput = true;
-			}
-
-			if ($draw && $hadInput && ($paddleMoved || $ballMoved)) {
-				drawMap($grid, $score, true);
 			}
 		}
 
 		return [$grid, $score];
+	}
+
+	function typeToSymbol($type) {
+		switch ($type) {
+			case 0:
+				return ' ';
+			case 1:
+				return '█';
+			case 2:
+				return '#';
+			case 3:
+				return '=';
+			case 4:
+				return 'o';
+			default:
+				return '?';
+		}
 	}
 
 	function flattenMap($input) {
@@ -73,25 +113,7 @@
 		foreach (yieldXY($minX, $minY, $maxX, $maxY, true) as $x => $y) {
 			$grid[$y][$x] = ' ';
 			if (isset($input[$y][$x])) {
-				$draw = ' ';
-				switch ($input[$y][$x]) {
-					case 0:
-						$draw = ' ';
-						break;
-					case 1:
-						$draw = '█';
-						break;
-					case 2:
-						$draw = '#';
-						break;
-					case 3:
-						$draw = '=';
-						break;
-					case 4:
-						$draw = 'o';
-						break;
-				}
-				$grid[$y][$x] = $draw;
+				$grid[$y][$x] = typeToSymbol($input[$y][$x]);
 			}
 		}
 
@@ -101,7 +123,9 @@
 	function drawMap($grid, $score = 0, $redraw = false) {
 		$map = flattenMap($grid);
 
-		if ($redraw) { echo "\033[" . (count($map) + 3) . "A"; }
+		$height = count($map) + 3;
+
+		if ($redraw) { echo "\033[" . $height . "A"; }
 
 		echo 'Score: ', $score, "\n";
 		echo '┍', str_repeat('━', count($grid[0])), '┑', "\n";
@@ -112,6 +136,7 @@
 			echo "\n";
 		}
 		echo '┕', str_repeat('━', count($map[0])), '┙', "\n";
+		return $height;
 	}
 
 	$drawResult = playGame($input)[0];
