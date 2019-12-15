@@ -30,6 +30,8 @@
 		$robot->setMiscData('y', 0);
 		$robots = [$robot];
 
+		if ($draw) { drawMap($map, false); }
+
 		while (!empty($robots)) {
 			foreach (array_keys($robots) as $key) {
 				$robot = $robots[$key];
@@ -57,9 +59,9 @@
 							$robot->setMiscData('y', $checkY);
 						}
 
-						if ($type == 2) { $oxygen = [$x, $y]; }
+						if ($type == 2) { $oxygen = [$checkX, $checkY]; }
 
-						if ($draw) { drawMap($map, [0,0]); }
+						if ($draw) { drawMap($map, true); usleep(1000); }
 					}
 
 				} catch (Exception $ex) {
@@ -100,16 +102,24 @@
 			case 0:
 				return '█';
 			case 1:
-				return '.';
+				return "\033[0;31m" . '█' . "\033[0m";
 			case 2:
-				return 'O';
+				return "\033[1;34m" . '█' . "\033[0m";
 			default:
 				return '?';
 		}
 	}
 
-	function flattenMap($inputMap) {
+	function flattenMap($inputMap, $padding = 25) {
 		[$minX, $minY, $maxX, $maxY] = getBoundingBox($inputMap);
+
+		// Makes drawing nicer.
+		if ($padding > 0) {
+			$minX = min(0 - $padding, $minX);
+			$minY = min(0 - $padding, $minY);
+			$maxX = max($padding, $maxX);
+			$maxY = max($padding, $maxY);
+		}
 
 		$map = [];
 		foreach (yieldXY($minX, $minY, $maxX, $maxY, true) as $x => $y) {
@@ -122,20 +132,34 @@
 		return $map;
 	}
 
-	function drawMap($inputMap, $loc = null, $steps = []) {
+	function drawMap($inputMap, $redraw = false, $loc = null, $steps = []) {
 		$map = flattenMap($inputMap);
 
-		if ($loc != null) { $map[$loc[1]][$loc[0]] = 'D'; }
-		foreach ($steps as $s) { $map[$s[1]][$s[0]] = 'x'; }
+		foreach ($steps as $s) {
+			$map[$s[1]][$s[0]] = "\033[1;32m" . '█' . "\033[0m";
+		}
+		if ($loc != null) {
+			$map[$loc[1]][$loc[0]] = "\033[1;33m" . '█' . "\033[0m";
+		}
+
+		$height = count($map) + 2;
+		if ($redraw) { echo "\033[" . $height . "A"; }
 
 		echo '┍', str_repeat('━', count($map[0])), '┑', "\n";
 		foreach ($map as $row) { echo '│', implode('', $row), '│', "\n"; }
 		echo '┕', str_repeat('━', count($map[0])), '┙', "\n";
-		echo "\n\n";
 	}
 
 	function generateOxygen($map, $draw = false) {
 		$minutes = 0;
+
+		if ($draw) {
+			drawMap($map);
+			echo "\033[1A";
+			echo "\033[2C";
+			echo '[ Minutes: ', $minutes, ' ]', "\n";
+			usleep(1000);
+		}
 
 		do {
 			$minutes++;
@@ -155,8 +179,11 @@
 			}
 
 			if ($draw) {
-				echo 'Minutes: ', $minutes, "\n";
-				drawMap($map);
+				drawMap($map, true);
+				echo "\033[1A";
+				echo "\033[2C";
+				echo '[ Minutes: ', $minutes, ' ]', "\n";
+				usleep(1000);
 			}
 
 			$spaces = ['1' => 0, '2' => 0];
@@ -183,9 +210,9 @@
 	$foo = $pf->solveMaze();
 
 	if ($draw1) {
-		drawMap($map, $oxygen, $foo[0]['previous']);
+		drawMap($map, true, [0, 0], $foo[0]['previous']);
 	}
-	$part1 = $foo[0]['steps'] + 1;
+	$part1 = $foo[0]['steps'];
 
 	echo 'Part 1: ', $part1, "\n";
 
