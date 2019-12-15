@@ -66,14 +66,11 @@
 
 				} catch (Exception $ex) {
 					// Robot wants input, kill it and spawn replacements.
-					$state = $robot->saveState();
+					unset($robots[$key]);
 
 					// Robot current location.
 					$x = $robot->getMiscData('x');
 					$y = $robot->getMiscData('y');
-
-					// Kill this robot.
-					unset($robots[$key]);
 
 					// Create Replacements.
 					for ($i = 1; $i <= 4; $i++) {
@@ -82,12 +79,12 @@
 						$checkX = $x + $directions[$i]['movement']['x'];
 						if (isset($map[$checkY][$checkX])) { continue; }
 
-						$r = new IntCodeVM();
-						$r->loadState($state);
+						$r = $robot->clone();
 						$r->appendInput($i);
 						$r->setMiscData('direction', $i);
 						$r->setMiscData('x', $x);
 						$r->setMiscData('y', $y);
+
 						$robots[] = $r;
 					}
 				}

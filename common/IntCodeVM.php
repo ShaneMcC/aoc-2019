@@ -246,9 +246,14 @@
 		public function getRelativeBase() { return $this->relativeBase; }
 		public function setRelativeBase($value) { $this->relativeBase = $value; if ($this->debug) { return 'Relbase is now: ' . $value; } }
 
+		public function clone() {
+			$c = new IntCodeVM();
+			$c->loadState($this->saveState());
+			return $c;
+		}
 
 		public function saveState() {
-			return ['in' => $this->input, 'out' => $this->output, 'loc' => $this->location, 'data' => $this->data, 'exitCode' => $this->exitCode, 'exited' => $this->exited];
+			return ['in' => $this->input, 'out' => $this->output, 'loc' => $this->location, 'data' => $this->data, 'misc' => $this->miscData, 'exitCode' => $this->exitCode, 'exited' => $this->exited];
 		}
 
 		public function loadState($state) {
@@ -256,6 +261,7 @@
 			$this->output = $state['out'];
 			$this->location = $state['loc'];
 			$this->data = $state['data'];
+			$this->miscData = $state['misc'];
 			$this->exitCode = $state['exitCode'];
 			$this->exited = $state['exited'];
 		}
