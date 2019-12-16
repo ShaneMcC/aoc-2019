@@ -12,9 +12,7 @@
 		for ($i = 0; $i < count($input); $i++) {
 			$val = 0;
 			for ($j = $i; $j < count($input); $j++) {
-				$patternLen = count($pattern) * ($i + 1);
-				$patternPos = (($j + 1) % $patternLen);
-				$patternBit = $pattern[floor($patternPos / ($patternLen / count($pattern)))];
+				$patternBit = $pattern[(($j + 1) / ($i + 1)) % 4];
 				$val += ($input[$j] * $patternBit);
 			}
 			$result[] = (abs($val) % 10);
