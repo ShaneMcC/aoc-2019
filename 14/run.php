@@ -1,5 +1,9 @@
 #!/usr/bin/php
 <?php
+	$__CLI['long'] = ['only1'];
+	$__CLI['extrahelp'] = [];
+	$__CLI['extrahelp'][] = '      --only1              Only do part 1.';
+
 	require_once(dirname(__FILE__) . '/../common/common.php');
 	$input = getInputLines();
 
@@ -76,6 +80,8 @@
 	$part1 = $react[0];
 
 	echo 'Part 1: ', $part1, "\n";
+
+ 	if (isset($__CLIOPTS['only1'])) { die(); }
 
 	function checkMaxFuel($reactions, $orePerFuel, $max = 1000000000000) {
 		$lower = floor($max / $orePerFuel);
