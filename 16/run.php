@@ -33,8 +33,6 @@
 
 	// Based on: https://www.reddit.com/r/adventofcode/comments/ebai4g/2019_day_16_solutions/
 	//
-	// There is some magic here, fucked if I know what.
-	//
 	// Something like:
 	//  - Because "the inputs in the pattern are repeated <digit number> of times"
 	//    everything before the current <digit number> will always be 0, so we
