@@ -5,20 +5,11 @@
 	$input = getInputLine();
 
 	function getInitialView($input) {
-		$output = '';
 		$vm = new IntCodeVM(IntCodeVM::parseInstrLines($input));
-		while (!$vm->hasExited()) {
-			$vm->step();
+		$vm->run();
 
-			if ($vm->hasExited()) { break; }
-
-			// Wait until we have outputs
-			if ($vm->getOutputLength() == 1) {
-				$out = $vm->getOutput();
-				$output .= chr($out);
-			}
-		}
-
+		$output = '';
+		foreach ($vm->getAllOutput() as $out) { $output .= chr($out); }
 		$bits = explode("\n", $output);
 		$output = [];
 		foreach ($bits as $bit) { if (!empty($bit)) { $output[] = str_split($bit); } }
@@ -28,11 +19,12 @@
 
 	function drawMap($grid, $redraw = false) {
 		$height = count($grid) + 2;
+		$width = count($grid[0]);
 		if ($redraw) { echo "\033[" . $height . "A"; }
 
-		echo '┍', str_repeat('━', count($grid[0])), '┑', "\n";
-		foreach ($grid as $row) { echo '│', implode('', $row), '│', "\n"; }
-		echo '┕', str_repeat('━', count($grid[0])), '┙', "\n";
+		echo '┍', str_repeat('━', $width), '┑', "\n";
+		foreach ($grid as $row) { echo '│', sprintf('%-' . $width . 's', implode('', $row)), '│', "\n"; }
+		echo '┕', str_repeat('━', $width), '┙', "\n";
 	}
 
 	$initialView = getInitialView($input);
@@ -50,16 +42,6 @@
 	}
 	echo 'Part 1: ', $callibration, "\n";
 
-	function findRobot($map) {
-		foreach (yieldXY(0, 0, count($map[0]), count($map)) as $x => $y) {
-			if (isset($map[$y][$x]) && $map[$y][$x] == '^') {
-				return [$x, $y];
-			}
-		}
-
-		return FALSE;
-	}
-
 	$directions = ['^' => ['rotations' => ['<', '>'], 'movement' => ['x' => 0, 'y' => -1]],
 	               '>' => ['rotations' => ['^', 'v'], 'movement' => ['x' => 1, 'y' => 0]],
 	               'v' => ['rotations' => ['>', '<'], 'movement' => ['x' => 0, 'y' => 1]],
@@ -69,7 +51,14 @@
 	function getInstructions($map) {
 		global $directions;
 
-		$start = findRobot($map);
+		$start = FALSE;
+		foreach (yieldXY(0, 0, count($map[0]), count($map)) as $x => $y) {
+			if (isset($map[$y][$x]) && $map[$y][$x] == '^') {
+				$start = [$x, $y];
+				break;
+			}
+		}
+		if ($start == FALSE) { die('No Robot.'); }
 
 		$instructions = [];
 
@@ -131,7 +120,7 @@
 
 	// Terrible attempt at figuring out common strings of instructions.
 	// I'm sure there is a nicer way, but this works for now.
-	function getMovementInstructions($instructions) {
+	function breakdownInstructions($instructions) {
 		$insString = implode(',', $instructions) . ',';
 
 		$stringID = 65;
@@ -185,31 +174,31 @@
 		return array_merge([implode(',', $finalProgram)], array_keys($strings));
 	}
 
-	$instructions = getInstructions($initialView);
-
-	$inputInstructions = getMovementInstructions($instructions);
-	$inputInstructions[] = 'n';
-	$inputInstructions[] = '';
-
 	$vm = new IntCodeVM(IntCodeVM::parseInstrLines($input));
-	foreach (str_split(implode("\n", $inputInstructions)) as $i) { $vm->appendInput(ord($i)); }
 	$vm->setData(0, 2);
+
+	// Input instructions.
+	$instructions = getInstructions($initialView);
+	$inputInstructions = breakdownInstructions($instructions);
+	foreach (str_split(implode("\n", $inputInstructions)) as $i) { $vm->appendInput(ord($i)); }
+	$vm->appendInput(10); // New line after instructions
+	$vm->appendInput(ord('n')); // No live feed
+	$vm->appendInput(10); // Final new line to begin.
+
 	$vm->run();
 
-	if ($vm->hasExited()) {
-		$vmOut = $vm->getAllOutput();
+	$vmOut = $vm->getAllOutput();
 
-		$out = $vmOut[count($vmOut) - 1];
-		if ($out > 255) {
-			echo 'Part 2: ', $out, "\n";
-		} else {
-			echo 'Error in Part 2.', "\n";
+	$lastOut = $vmOut[count($vmOut) - 1];
+	if ($lastOut > 255) {
+		echo 'Part 2: ', $lastOut, "\n";
+	} else {
+		echo 'Error in Part 2.', "\n";
 
-			$vmOut = '';
-			foreach ($vmOut as $out) { $output .= chr($out); }
-			$bits = explode("\n", $output);
-			$output = [];
-			foreach ($bits as $bit) { if (!empty($bit)) { $output[] = str_split($bit); } }
-			drawMap($output);
-		}
+		$output = '';
+		foreach ($vmOut as $out) { $output .= chr($out); }
+		$bits = explode("\n", $output);
+		$output = [];
+		foreach ($bits as $bit) { if (!empty($bit)) { $output[] = str_split($bit); } }
+		drawMap($output);
 	}
