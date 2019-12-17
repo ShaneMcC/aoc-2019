@@ -27,7 +27,8 @@
 		echo '┕', str_repeat('━', $width), '┙', "\n";
 	}
 
-	if (isTest()) {
+	$inputIsIntCode = preg_match('#^[0-9-,]+$#', $input);
+	if (!$inputIsIntCode) {
 		$initialView = [];
 		foreach (getInputLines() as $line) { if (!empty($line)) { $initialView[] = str_split($line); } }
 	} else {
@@ -195,7 +196,7 @@
 	$instructions = getInstructions($initialView);
 	$inputInstructions = breakdownInstructions($instructions);
 
-	if (isTest()) {
+	if (!$inputIsIntCode) {
 		echo 'Instructions: ', implode(',', $instructions), "\n";
 		echo 'VM Input: ', "\n";
 		foreach ($inputInstructions as $input) { echo $input, "\n"; }
