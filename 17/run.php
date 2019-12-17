@@ -124,72 +124,23 @@
 		return $instructions;
 	}
 
-	// Terrible attempt at figuring out common strings of instructions.
-	// I'm sure there is a nicer way, but this works for now.
 	function breakdownInstructions($instructions) {
 		$insString = implode(',', $instructions) . ',';
 
-		$stringID = 65;
-		$strings = [];
-		$finalProgram = [];
+		$regex = '#^(.{1,20},)\1*(.{1,20},)(?:\1|\2)*(.{1,20},)(?:\1|\2|\3)*$#';
 
-		$test = [];
-		$i = 0;
-		$previous = 0;
-		while (isset($instructions[$i])) {
-			$test[] = $instructions[$i++];
-			$test[] = $instructions[$i++];
+		if (preg_match($regex, $insString, $m)) {
+			[$all, $a, $b, $c] = $m;
 
-			$testString = implode(',', $test);
+			$all = rtrim($all, ',');
+			$a = rtrim($a, ',');
+			$b = rtrim($b, ',');
+			$c = rtrim($c, ',');
 
-			// Are we part of a previously found string?
-			foreach (array_keys($strings) as $knownString) {
-				if ($knownString == $testString) {
-					debugOut('Previous String ', $strings[$testString],': ', $testString, "\n");
-					$finalProgram[] = $strings[$testString];
-					$test = [];
-					continue 2;
-				} else if (strpos($knownString, $testString) === 0) {
-					debugOut('Partial previous String ', $strings[$knownString],': ', $testString, "\n");
-					continue 2;
-				}
-			}
-
-			if (strlen($testString) > 20) {
-				$count = 0;
-			} else {
-				$count = substr_count($insString, $testString . ',');
-				if (!preg_match('@^[#,]*' . preg_quote($testString, '@') . '@', $insString)) {
-					$count = 0;
-				}
-			}
-			debugOut('Test: ', $count, ' => ', $testString, "\n");
-
-			if ($count < 2 && $previous > 1) {
-				$past = array_splice($test, 0, count($test) - 2);
-				$test = array_splice($test, count($test) - 2);
-
-				$pastString = implode(',', $past);
-				if (!isset($strings[$pastString])) {
-					$strings[$pastString] = chr($stringID++);
-					$insString = str_replace($pastString, '#', $insString);
-				}
-
-				$finalProgram[] = $strings[$pastString];
-
-				debugOut('String ', $strings[$pastString],': ', $pastString, "\n");
-			}
-
-			$previous = $count;
+			$all = str_replace([$a, $b, $c], ['A', 'B', 'C'], $all);
 		}
 
-		if (!empty($test)) {
-			$pastString = implode(',', $test);
-			$finalProgram[] = $strings[$pastString];
-			debugOut('FINAL String ', $strings[$pastString],': ', $pastString, "\n");
-		}
-
-		return array_merge([implode(',', $finalProgram)], array_keys($strings));
+		return [$all, $a, $b, $c];
 	}
 
 	// Figure out instructions.
