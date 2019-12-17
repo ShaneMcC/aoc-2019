@@ -27,7 +27,12 @@
 		echo '┕', str_repeat('━', $width), '┙', "\n";
 	}
 
-	$initialView = getInitialView($input);
+	if (isTest()) {
+		$initialView = [];
+		foreach (getInputLines() as $line) { if (!empty($line)) { $initialView[] = str_split($line); } }
+	} else {
+		$initialView = getInitialView($input);
+	}
 	$callibration = 0;
 
 	foreach (yieldXY(0, 0, count($initialView[0]), count($initialView)) as $x => $y) {
@@ -136,15 +141,27 @@
 
 			$testString = implode(',', $test);
 
-			if (isset($strings[$testString])) {
-				debugOut('String ', $strings[$testString],': ', $testString, "\n");
-				$finalProgram[] = $strings[$testString];
-				$test = [];
-				continue;
+			// Are we part of a previously found string?
+			foreach (array_keys($strings) as $knownString) {
+				if ($knownString == $testString) {
+					debugOut('Previous String ', $strings[$testString],': ', $testString, "\n");
+					$finalProgram[] = $strings[$testString];
+					$test = [];
+					continue 2;
+				} else if (strpos($knownString, $testString) === 0) {
+					debugOut('Partial previous String ', $strings[$knownString],': ', $testString, "\n");
+					continue 2;
+				}
 			}
 
-			$count = substr_count($insString, $testString . ',');
-
+			if (strlen($testString) > 20) {
+				$count = 0;
+			} else {
+				$count = substr_count($insString, $testString . ',');
+				if (!preg_match('@^[#,]*' . preg_quote($testString, '@') . '@', $insString)) {
+					$count = 0;
+				}
+			}
 			debugOut('Test: ', $count, ' => ', $testString, "\n");
 
 			if ($count < 2 && $previous > 1) {
@@ -174,12 +191,21 @@
 		return array_merge([implode(',', $finalProgram)], array_keys($strings));
 	}
 
+	// Figure out instructions.
+	$instructions = getInstructions($initialView);
+	$inputInstructions = breakdownInstructions($instructions);
+
+	if (isTest()) {
+		echo 'Instructions: ', implode(',', $instructions), "\n";
+		echo 'VM Input: ', "\n";
+		foreach ($inputInstructions as $input) { echo $input, "\n"; }
+		die();
+	}
+
 	$vm = new IntCodeVM(IntCodeVM::parseInstrLines($input));
 	$vm->setData(0, 2);
 
-	// Input instructions.
-	$instructions = getInstructions($initialView);
-	$inputInstructions = breakdownInstructions($instructions);
+	// Give the VM the instructions.
 	foreach (str_split(implode("\n", $inputInstructions)) as $i) { $vm->appendInput(ord($i)); }
 	$vm->appendInput(10); // New line after instructions
 	$vm->appendInput(ord('n')); // No live feed
