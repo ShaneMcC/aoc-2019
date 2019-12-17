@@ -54,17 +54,10 @@
 
 		// Loop through 100 times.
 		for ($j = 0; $j < 100; $j++) {
-			// Create new empty array.
-			$newInput = array_fill(0, $size, 0);
-			// Last digit is always the same.
-			$newInput[$size - 1] = $input[$size - 1];
-
 			// Now loop through and calculate the new values.
 			for ($i = $size - 2; $i != $offset-1; $i--) {
-				$newInput[$i] = ($input[$i] + $newInput[$i + 1]) % 10;
+				$input[$i] = ($input[$i] + $input[$i + 1]) % 10;
 			}
-
-			$input = $newInput;
 		}
 
 		return implode('', array_slice($input, $offset, 8));
