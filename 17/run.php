@@ -137,6 +137,10 @@
 		$i = 0;
 		$previous = 0;
 		while (isset($instructions[$i])) {
+			while (count($test) < 4) {
+				$test[] = $instructions[$i++];
+				$test[] = $instructions[$i++];
+			}
 			$test[] = $instructions[$i++];
 			$test[] = $instructions[$i++];
 
@@ -165,7 +169,7 @@
 			}
 			debugOut('Test: ', $count, ' => ', $testString, "\n");
 
-			if ($count < 2 && $previous > 1) {
+			if ($count < $previous) {
 				$past = array_splice($test, 0, count($test) - 2);
 				$test = array_splice($test, count($test) - 2);
 
@@ -196,11 +200,11 @@
 	$instructions = getInstructions($initialView);
 	$inputInstructions = breakdownInstructions($instructions);
 
-	if (!$inputIsIntCode) {
+	if (!$inputIsIntCode || isDebug()) {
 		echo 'Instructions: ', implode(',', $instructions), "\n";
 		echo 'VM Input: ', "\n";
-		foreach ($inputInstructions as $input) { echo $input, "\n"; }
-		die();
+		foreach ($inputInstructions as $i) { echo $i, "\n"; }
+		if (!$inputIsIntCode) { die(); }
 	}
 
 	$vm = new IntCodeVM(IntCodeVM::parseInstrLines($input));
