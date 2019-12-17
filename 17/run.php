@@ -137,10 +137,6 @@
 		$i = 0;
 		$previous = 0;
 		while (isset($instructions[$i])) {
-			while (count($test) < 4) {
-				$test[] = $instructions[$i++];
-				$test[] = $instructions[$i++];
-			}
 			$test[] = $instructions[$i++];
 			$test[] = $instructions[$i++];
 
@@ -169,7 +165,7 @@
 			}
 			debugOut('Test: ', $count, ' => ', $testString, "\n");
 
-			if ($count < $previous) {
+			if ($count < 2 && $previous > 1) {
 				$past = array_splice($test, 0, count($test) - 2);
 				$test = array_splice($test, count($test) - 2);
 
