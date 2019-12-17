@@ -31,43 +31,44 @@
 	$part1 = doPart1($start);
 	echo 'Part 1: ', $part1, "\n";
 
-	// Based on: https://www.reddit.com/r/adventofcode/comments/ebai4g/2019_day_16_solutions/
-	//
 	// Something like:
 	//  - Because "the inputs in the pattern are repeated <digit number> of times"
 	//    everything before the current <digit number> will always be 0, so we
-	//    only need to worry about digits after us.
+	//    only need to worry about digits after it.
 	//
 	//  - Because we are offset into the latter half of the puzzle, we end up
 	//    only actually ever having [0, 0, 0, 0, ... 1, 1, ... 1, 1] for the
-	//    pattern, so our checksum becomes a sum() operation on the remaining
-	//    digits after us.
+	//    pattern, so our values are essentially just a sum() operation on the
+	//    remaining digits after us.
 	//
-	//  - Once we've calculated the checksum once, we can then skip through the
-	//    rest and subtract the previous digit from the value (because it would
-	//    be patterned to 0 this time).
-	//
-	//  - Get number.
+	//  - Because of the % 10, it's quicker to do this backwards, the last digit
+	//    never changes, and each digit prior to that is just the sum of the
+	//    same digit in the previous step, plus the digit in front of us, % 10
 	//
 	function doPart2($start) {
 		$input = str_split(str_repeat($start, 10000));
-		$skip = (int)substr($start, 0, 7);
+		$offset = (int)substr($start, 0, 7);
 
-		for ($i = 0; $i < 100; $i++) {
-		    $checksum = array_sum(array_slice($input, $skip));
+		$size = count($input);
+		if ($offset < ($size / 2)) { die('Offset is too early.'); }
 
-		    $newInput = array_fill(0, $skip, 0);
-			$newInput[] = (abs($checksum) % 10);
+		// Loop through 100 times.
+		for ($j = 0; $j < 100; $j++) {
+			// Create new empty array.
+			$newInput = array_fill(0, $size, 0);
+			// Last digit is always the same.
+			$newInput[$size - 1] = $input[$size - 1];
 
-			for ($j = $skip + 1; $j < count($input); $j++) {
-	        	$checksum -= $input[$j - 1];
-	        	$newInput[] = (abs($checksum) % 10);
-	    	}
-    		$input = $newInput;
-    	}
+			// Now loop through and calculate the new values.
+			for ($i = $size - 2; $i != $offset-1; $i--) {
+				$newInput[$i] = ($input[$i] + $newInput[$i + 1]) % 10;
+			}
 
-    	return implode('', array_slice($input, $skip, 8));
-    }
+			$input = $newInput;
+		}
+
+		return implode('', array_slice($input, $offset, 8));
+	}
 
 	$part2 = doPart2($start);
 	echo 'Part 2: ', $part2, "\n";
