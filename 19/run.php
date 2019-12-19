@@ -33,43 +33,35 @@
 		$map[$y][$x] = $out ? '#' : ' ';
 	}
 
-	drawMap($map);
+	// drawMap($map);
 	echo 'Part 1: ', $part1, "\n";
 
 	$map = [];
-	$y = 1500; // Reasonable starting guess?
-	$found = false;
 	$part2 = [0, 0];
-	while (true) {
-		$y++;
 
-		$foundFirst = false;
-		$startX = 0;
-
-		// Look for a line at least 100 wide
-		for ($x = $y;; $x++) {
+	$startX = 0;
+	// For each row.
+	for ($y = 100 ;; $y++) {
+		// Go across the columns
+		$found = false;
+		for ($x = $startX;; $x++) {
+			// Find the start of the beam
 			$out = testXY($input, $x, $y);
+			if ($out == 0) { continue; }
 
-			if ($out == 1) {
-				$startX = $x;
+			// Remember for future where we started as future lines will start
+			// at the same or later place.
+			if (!$found) { $found = true; $startX = $x; }
 
-				$out2 = testXY($input, $x + 99, $y);
-				if ($out2 != '1') {
-					continue 2;
-				} else {
-					break;
-				}
-			}
-		}
-		// Look across the line to see if we get a valid 100x100 box.
-		for ($x2 = $startX + 90 ;; $x2++) {
-			$corners = testXY($input, $x2, $y);
+			echo 'Check: [', $x, ', ', $y, ']', "\n";
+
+			$corners = testXY($input, $x + 99, $y);
 			if ($corners == 0) { continue 2; }
 
-			$corners += testXY($input, $x2 + 99, $y);
-			$corners += testXY($input, $x2, $y + 99);
-			$corners += testXY($input, $x2 + 99, $y + 99);
-			if ($corners == 4) { $part2 = [$x2, $y]; break; }
+			$corners += testXY($input, $x + 99, $y);
+			$corners += testXY($input, $x, $y + 99);
+			$corners += testXY($input, $x + 99, $y + 99);
+			if ($corners == 4) { $part2 = [$x, $y]; break; }
 		}
 
 		// We have a box.
