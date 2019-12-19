@@ -43,17 +43,14 @@
 	// For each row.
 	for ($y = 100 ;; $y++) {
 		// Go across the columns
-		$found = false;
 		for ($x = $startX;; $x++) {
 			// Find the start of the beam
 			$out = testXY($input, $x, $y);
 			if ($out == 0) { continue; }
 
-			// Remember for future where we started as future lines will start
-			// at the same or later place.
-			if (!$found) { $found = true; $startX = $x; }
-
-			echo 'Check: [', $x, ', ', $y, ']', "\n";
+			// This will be the first X position that is at least wide enough
+			// so remember it for future rows as it'll be the minimum useful.
+			$startX = $x;
 
 			$corners = testXY($input, $x + 99, $y);
 			if ($corners == 0) { continue 2; }
