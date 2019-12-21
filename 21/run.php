@@ -12,7 +12,6 @@
 		foreach ($instructions as $i) {
 			$i = trim($i);
 			if (!empty($i) && $i[0] != '#') {
-				echo $i, "\n";
 				foreach (str_split($i) as $b) { $vm->appendInput(ord($b)); }
 				$vm->appendInput(10);
 			}
@@ -47,3 +46,30 @@ INSTRUCTIONS);
 
 	$part1 = runBot($input, $inputInstructions);
 	echo 'Part 1: ', $part1, "\n";
+
+
+	$inputInstructions = explode("\n", <<<INSTRUCTIONS
+# If A is not ground, jump.
+NOT A J
+
+# If B is not ground, and A and C are then we can jump over it.
+NOT B T
+AND A T
+AND C T
+OR T J
+
+# if C is not ground and D and H are, then it'll probably be safe to jump, then
+# we are still safe to jump again even if E is not ground.
+NOT C T
+AND D T
+AND H T
+OR T J
+
+# Only ever jump if our landing point D is safe.
+AND D J
+
+RUN
+INSTRUCTIONS);
+
+	$part2 = runBot($input, $inputInstructions);
+	echo 'Part 2: ', $part2, "\n";
