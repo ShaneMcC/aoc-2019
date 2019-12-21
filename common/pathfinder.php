@@ -93,7 +93,7 @@
 		 *                           Gets passed [$finalState, $vistedLocations]
 		 *
 		 *   'getPoints' => Called to find out what possible points to check
-		 *                  next from the given state. (Defaults to L/R/U/D)
+		 *                  next from the given state. (Defaults to all squares around us)
 		 *
 		 * @param $hookPoint Name of hook point (from above list.)
 		 * @param $function Function to call for this hook.
