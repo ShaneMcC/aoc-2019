@@ -58,27 +58,57 @@
 		return [$portals, $teleports];
 	}
 
-	function getSteps($map, $start, $end, $teleports = []) {
+	function getReachable($map, $portals, $teleports) {
+		$reachable = [];
+
+		foreach ($portals as $a) {
+			foreach ($portals as $b) {
+				foreach ($a as $a2) {
+					foreach ($b as $b2) {
+						if ($a2 == $b2) { continue; }
+						$steps = getSteps($map, $a2, $b2);
+						if ($steps[0] !== FALSE) {
+							if (!isset($reachable[$a2[1]][$a2[0]])) { $reachable[$a2[1]][$a2[0]] = []; }
+							$reachable[$a2[1]][$a2[0]][] = ['point' => $b2, 'steps' => $steps[0]['steps']];
+						}
+					}
+				}
+			}
+		}
+
+		return $reachable;
+	}
+
+
+	// TODO: Probably want to rewrite this to skip some bits
+	//       eg if we know what portals are accessible from each other portal
+	//       we can just skip between them, rather than checking every
+	//       intermediate space.
+	function getSteps($map, $start, $end, $teleports = [], $knownReachable = []) {
 		$pf = new PathFinder($map, $start, $end);
 
 		$pf->setHook('isAccessible', function($state, $x, $y) {
 			return $state['grid'][$y][$x] == '.';
 		});
 
-		$pf->setHook('getPoints', function ($state) use ($teleports) {
+		$pf->setHook('getPoints', function ($state) use ($teleports, $knownReachable) {
 			list($curX, $curY) = $state['current'];
 			$layer = isset($state['current'][2]) ? $state['current'][2] : NULL;
-
 			$points = [];
-			$points[] = [$curX + 1, $curY];
-			$points[] = [$curX, $curY + 1];
-			$points[] = [$curX - 1, $curY];
-			$points[] = [$curX, $curY - 1];
+
+			if (!empty($knownReachable)) {
+				$points = $knownReachable[$curY][$curX];
+			} else {
+				$points[] = ['point' => [$curX + 1, $curY]];
+				$points[] = ['point' => [$curX, $curY + 1]];
+				$points[] = ['point' => [$curX - 1, $curY]];
+				$points[] = ['point' => [$curX, $curY - 1]];
+			}
 
 			// Add layers if we need to.
 			if ($layer !== null) {
 				$newPoints = [];
-				foreach ($points as $p) { $p[2] = $layer;  $newPoints[] = $p; }
+				foreach ($points as $p) { $p['point'][2] = $layer;  $newPoints[] = $p; }
 				$points = $newPoints;
 			}
 
@@ -95,7 +125,7 @@
 
 					// If we are on layer 0, only portals to layer 1 work.
 					if (($layer !== 0 || $p[2] == 1) && $layer < 30) {
-						$points[] = $p;
+						$points[] = ['point' => $p];
 					}
 				}
 			}
@@ -113,11 +143,12 @@
 	}
 
 	[$portals, $teleports] = findPortals($map);
+	$knownReachable = getReachable($map, $portals, $teleports);
 
 	$start = $portals['AA'][0];
 	$end = $portals['ZZ'][0];
 
-	$steps1 = getSteps($map, $start, $end, $teleports);
+	$steps1 = getSteps($map, $start, $end, $teleports, $knownReachable);
 	$part1 = $steps1[0]['steps'];
 
 	echo 'Part 1: ', $part1, "\n";
@@ -126,7 +157,7 @@
 	$start[2] = 0;
 	$end[2] = 0;
 
-	$steps2 = getSteps($map, $start, $end, $teleports);
+	$steps2 = getSteps($map, $start, $end, $teleports, $knownReachable);
 	$part2 = $steps2[0]['steps'];
 
 	echo 'Part 2: ', $part2, "\n";

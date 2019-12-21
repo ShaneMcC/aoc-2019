@@ -113,15 +113,19 @@
 
 			$options = [];
 			foreach (call_user_func($this->hooks['getPoints'], $state) as $point) {
-				list($x, $y) = $point;
+				if (isset($point['point'])) {
+					list($x, $y) = $point['point'];
+				} else {
+					list($x, $y) = $point;
+				}
 
 				if (!call_user_func($this->hooks['isValidLocation'], $state, $x, $y)) { continue; }
 
 				if (call_user_func($this->hooks['isAccessible'], $state, $x, $y) && !in_array($point, $state['previous'])) {
 					$newState = $state;
 					$newState['previous'][] = $newState['current'];
-					$newState['current'] = $point;
-					$newState['steps']++;
+					$newState['current'] = isset($point['point']) ? $point['point'] : $point;
+					$newState['steps'] += isset($point['steps']) ? $point['steps'] : 1;
 
 					if (isset($this->hooks['changeState'])) {
 						$newState = call_user_func($this->hooks['changeState'], $state, $newState);
