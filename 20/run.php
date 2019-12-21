@@ -8,6 +8,9 @@
 	foreach (getInputLines() as $row) { $map[] = str_split($row); }
 
 	function findPortals($map) {
+		$mapOutsideX = [2, count($map[2]) - 1]; // First row of map doesn't have any portals.
+		$mapOutsideY = [2, count($map) - 3]; // Last 2 rows are portal IDs.
+
 		$portals = [];
 		$teleports = [];
 		foreach ($map as $y => $row) {
@@ -31,7 +34,6 @@
 						} else if (isset($map[$y][$x - 1]) && $map[$y][$x - 1] == '.') {
 							$portalCell = [$x - 1, $y];
 						}
-
 					}
 
 					if ($portal != null) {
@@ -42,8 +44,11 @@
 							$first = $portals[$portal][0];
 							$second = $portals[$portal][1];
 
-							$teleports[$first[1]][$first[0]] = $second;
-							$teleports[$second[1]][$second[0]] = $first;
+							$firstLayer = (in_array($first[0], $mapOutsideX) || in_array($first[1], $mapOutsideY)) ? -1 : 1;
+							$secondLayer = (in_array($second[0], $mapOutsideX) || in_array($second[1], $mapOutsideY)) ? -1 : 1;
+
+							$teleports[$first[1]][$first[0]] = ['dest' => $second, 'portal' => $portal, 'layer' => $firstLayer];
+							$teleports[$second[1]][$second[0]] = ['dest' => $first, 'portal' => $portal, 'layer' => $secondLayer];
 						}
 					}
 				}
@@ -51,16 +56,6 @@
 		}
 
 		return [$portals, $teleports];
-	}
-
-	function drawMap($grid, $redraw = false) {
-		$height = count($grid) + 2;
-		$width = count($grid[2]) + 2;
-		if ($redraw) { echo "\033[" . $height . "A"; }
-
-		echo '┍', str_repeat('━', $width), '┑', "\n";
-		foreach ($grid as $row) { echo '│', sprintf('%-' . $width . 's', implode('', $row)), '│', "\n"; }
-		echo '┕', str_repeat('━', $width), '┙', "\n";
 	}
 
 	function getSteps($map, $start, $end, $teleports = []) {
@@ -72,13 +67,38 @@
 
 		$pf->setHook('getPoints', function ($state) use ($teleports) {
 			list($curX, $curY) = $state['current'];
+			$layer = isset($state['current'][2]) ? $state['current'][2] : NULL;
 
 			$points = [];
 			$points[] = [$curX + 1, $curY];
 			$points[] = [$curX, $curY + 1];
 			$points[] = [$curX - 1, $curY];
 			$points[] = [$curX, $curY - 1];
-			if (isset($teleports[$curY][$curX])) { $points[] = $teleports[$curY][$curX]; }
+
+			// Add layers if we need to.
+			if ($layer !== null) {
+				$newPoints = [];
+				foreach ($points as $p) { $p[2] = $layer;  $newPoints[] = $p; }
+				$points = $newPoints;
+			}
+
+			// Check for teleports.
+			if (isset($teleports[$curY][$curX])) {
+				$t = $teleports[$curY][$curX];
+				$p = $t['dest'];
+
+				if ($layer === null) {
+					// No layers, all portals work.
+					$points[] = $p;
+				} else {
+					$p[2] = $layer + $t['layer'];
+
+					// If we are on layer 0, only portals to layer 1 work.
+					if (($layer !== 0 || $p[2] == 1) && $layer < 30) {
+						$points[] = $p;
+					}
+				}
+			}
 
 			return $points;
 		});
@@ -94,8 +114,19 @@
 
 	[$portals, $teleports] = findPortals($map);
 
-	$steps = getSteps($map, $portals['AA'][0], $portals['ZZ'][0], $teleports);
-	$part1 = $steps[0]['steps'];
+	$start = $portals['AA'][0];
+	$end = $portals['ZZ'][0];
+
+	$steps1 = getSteps($map, $start, $end, $teleports);
+	$part1 = $steps1[0]['steps'];
 
 	echo 'Part 1: ', $part1, "\n";
 
+	// Set start layers.
+	$start[2] = 0;
+	$end[2] = 0;
+
+	$steps2 = getSteps($map, $start, $end, $teleports);
+	$part2 = $steps2[0]['steps'];
+
+	echo 'Part 2: ', $part2, "\n";
