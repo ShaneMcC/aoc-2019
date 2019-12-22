@@ -166,7 +166,7 @@
 
 	$part1Objects = buildObjectPaths($map);
 	$part1 = distanceToCollectKeys($map, $part1Objects, '@', array_keys($part1Objects));
-	echo 'Part 1: ', $part1, "\n";
+	echo 'Part 1: Took path ', $part1[1], ' in ', $part1[0], ' steps.', "\n";
 
 	// Part 2
 	//
