@@ -53,7 +53,8 @@
 	// Sigh, part 2 is another case of "what you did already is useless, you need
 	// some special magic sauce instead."
 	//
-	// TLDR: Horrible maths. https://www.reddit.com/r/adventofcode/comments/ee0rqi/2019_day_22_solutions/fbnkaju/
+	// TLDR: Horrible maths. Implemented based on mcpower_ explanation at:
+	// https://www.reddit.com/r/adventofcode/comments/ee0rqi/2019_day_22_solutions/fbnkaju/
 
 	function shuffleDeckSmart($deckLen, $pattern) {
 		$offset = 0;
