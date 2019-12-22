@@ -53,68 +53,72 @@
 	// Sigh, part 2 is another case of "what you did already is useless, you need
 	// some special magic sauce instead."
 	//
-	// TLDR: Horrible maths. Reimplemented https://github.com/clgroft/advent-of-code-2019/blob/master/solutions/day22.rb
+	// TLDR: Horrible maths. https://www.reddit.com/r/adventofcode/comments/ee0rqi/2019_day_22_solutions/fbnkaju/
 
 	function shuffleDeckSmart($deckLen, $pattern) {
-		$a = 1;
-		$b = 0;
+		$offset = 0;
+		$increment = 1;
 
 		foreach ($pattern as $p) {
 			if (preg_match('#deal with increment ([0-9]+)#', $p, $m)) {
-				$inv = modinv($m[1], $deckLen);
-        		$a = ($a * $inv) % $deckLen;
+				$increment *= inv($m[1], $deckLen);
 			} else if (preg_match('#cut ([-0-9]+)#', $p, $m)) {
-				$b = ((($a * $m[1]) % $deckLen) + $b) % $deckLen;
+				$offset += $increment * $m[1];
 			} else if (preg_match('#deal into new stack#', $p, $m)) {
-				$b = ($b - $a % $deckLen);
-        		$a = (0 - $a) % $deckLen;
+  				$increment *= -1;
+  				$offset += $increment;
 			}
 		}
 
-		return [$a, $b, $deckLen];
+		return [$offset, $increment, $deckLen];
 	}
 
-	// TODO: Don't use gmp.
-	function modinv($a, $b) {
-		return gmp_invert($a, $b);
-	}
-
-	/* [$a, $b, $deckLen] = shuffleDeckSmart(10007, $input);
+	/* [$offset, $increment, $deckLen] = shuffleDeckSmart(10007, $input);
 	for ($i = 0; $i <= $deckLen; $i++) {
-		$get = ($a * $i + $b) % $deckLen;
-		if ($get == 2019) {
+		$val = ($offset + ($increment * $i)) % $deckLen;
+		if ($val == 2019) {
 			echo 'Part 1: ', $i, "\n";
 			break;
 		}
 	} */
 
-	[$a, $b, $deckLen] = shuffleDeckSmart(119315717514047, $input);
+	// https://en.wikipedia.org/wiki/Modular_exponentiation#Right-to-left_binary_method
+	// Doesn't seem to work at the scale we need, so using gmp for now.
+	function powMod($base, $exponent, $modulus) {
+		if (function_exists('gmp_powm')) {
+			return gmp_powm($base, $exponent, $modulus);
+		} else if (function_exists('bcpowmod')) {
+			return bcpowmod($base, $exponent, $modulus);
+		} else {
+			if ($modulus == 1) { return 0; }
 
-	function deckPow($a, $b, $deckLen, $p) {
-		$result = [$a, $b, $deckLen];
+			$result = 1;
+			$base = $base % $modulus;
 
-		$sq = [$a, $b, $deckLen];
-	    while ($p > 0) {
-	      if ($p % 2 == 1) {
-	      	$result = compose($result, $sq);
-	      }
-	      $p = floor($p / 2);
-	      $sq = compose($sq, $sq);
-	    }
+			while ($exponent > 0) {
+				if ($exponent % 2 == 1) {
+					$result = ($result * $base) % $modulus;
+				}
+				$exponent = $exponent >> 1;
+				$base = ($base * $base) % $modulus;
+			}
 
-	    return $result;
+			return $result;
+		}
 	}
 
-	function compose($deck, $other) {
-		$newDeck = $deck;
-
-		$newDeck[0] = $deck[0] * $other[0] % $deck[2];
-		$newDeck[1] = ((($deck[0] * $other[1]) % $deck[2]) + $deck[1]) % $deck[2];
-
-		return $newDeck;
+	function inv($n, $len) {
+		if (function_exists('gmp_invert')) {
+			return gmp_invert($n, $len);
+		} else {
+			return powMod($n, $len - 2, $len);
+		}
 	}
 
-	[$a, $b, $deckLen] = deckPow($a, $b, $deckLen, 101741582076661 - 1);
-	$get = ($a * 2020 + $b) % $deckLen;
-	echo 'Part 2: ', $get, "\n";
+	[$offset_diff, $increment_mul, $deckLen] = shuffleDeckSmart(119315717514047, $input);
 
+	$increment = powMod($increment_mul, 101741582076661, $deckLen);
+	$offset = $offset_diff * (1 - $increment) * inv(1 - $increment_mul, $deckLen);
+
+	$val = ($offset + ($increment * 2020)) % $deckLen;
+	echo 'Part 2: ', $val, "\n";
