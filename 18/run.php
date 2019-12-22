@@ -6,6 +6,35 @@
 	$map = [];
 	foreach (getInputLines() as $row) { $map[] = str_split($row); }
 
+	function removeDeadEnds($map) {
+		$maxX = max(array_keys($map[0]));
+		$maxY = max(array_keys($map));
+
+		$changed = 0;
+		do {
+			$changed = 0;
+
+			foreach (yieldXY(0, 0, $maxX, $maxY, true) as $x => $y) {
+				if ($map[$y][$x] != '.') { continue; }
+
+				$walls = 0;
+
+				if ($map[$y - 1][$x] == '#') { $walls++; }
+				if ($map[$y + 1][$x] == '#') { $walls++; }
+				if ($map[$y][$x - 1] == '#') { $walls++; }
+				if ($map[$y][$x + 1] == '#') { $walls++; }
+
+				if ($walls == 3) {
+					$map[$y][$x] = '#';
+					$changed++;
+				}
+			}
+
+		} while ($changed > 0);
+
+		return $map;
+	}
+
 	function getSteps($map, $start, $end) {
 		$pf = new PathFinder($map, $start, $end);
 		$pf->setHook('isAccessible', function($state, $x, $y) { return $state['grid'][$y][$x] != '#'; });
@@ -133,6 +162,8 @@
 
 		return [$bestPath, $bestCount];
 	}
+
+	$map = removeDeadEnds($map);
 
 	$part1 = getPath($map, buildObjectPaths($map), '@');
 	echo 'Part 1: ', implode('', $part1[0]), ' in ', $part1[1], "\n";
