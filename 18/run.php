@@ -122,51 +122,40 @@
 	}
 
 	$__KNOWN = [];
-	function getPath($map, $objects, $from, $visited = [], $otherKeys = [], $count = 0, $max = PHP_INT_MAX) {
-		global $__KNOWN;
+	function distanceToCollectKeys($map, $objects, $from, $wanted, $known = []) {
+		global 	$__KNOWN;
 
-		$visited[] = $from;
+		$wanted = array_diff($wanted, [$from]);
 
-		$id = $visited;
-		sort($id);
-		$id = implode('', $id) . ',' . $from;
-		if (isset($__KNOWN[$id]) && $__KNOWN[$id] < $count) { return [FALSE, FALSE]; }
-		$__KNOWN[$id] = $count;
+		if (empty($wanted)) { return 0; }
 
-		debugOut(implode('', $visited), "\n");
-
-		$reachable = getReachableObjects($map, $objects, $from, array_merge($visited, $otherKeys));
-
-		foreach (array_keys($reachable) as $r) {
-			if (in_array($r, $visited)) { unset($reachable[$r]); }
+		$id = implode('', $wanted) . ','. $from;
+		if (isset($__KNOWN[$id])) {
+			$__KNOWN[$id]['hit']++;
+			return $__KNOWN[$id]['result'];
 		}
 
-		// No reachable objects.
-		if (empty($reachable)) {
-			return [$visited, $count];
+		$result = PHP_INT_MAX;
+
+		$allKnown = array_merge($known, array_keys($objects));
+		foreach ($wanted as $w) { $allKnown = array_diff($allKnown, [$w]); }
+
+		$reachable = getReachableObjects($map, $objects, $from, $allKnown);
+
+		foreach ($reachable as $key) {
+			$d = $objects[$from]['to'][$key]['steps'] + distanceToCollectKeys($map, $objects, $key, $wanted, $known);
+			$result = min($result, $d);
 		}
 
-		// Try all, find the best.
-		$bestCount = PHP_INT_MAX;
-		$bestPath = '';
-		foreach (array_keys($reachable) as $key) {
-			$steps = $count + $objects[$from]['to'][$key]['steps'];
-			if ($steps < $max) {
-				[$p, $c] = getPath($map, $objects, $key, $visited, $otherKeys, $steps, $bestCount);
-				if ($p != FALSE && $c < $bestCount) {
-					$bestPath = $p;
-					$bestCount = $c;
-				}
-			}
-		}
-
-		return [$bestPath, $bestCount];
+		$__KNOWN[$id] = ['hit' => 0, 'result' => $result];
+		return $result;
 	}
 
 	$map = removeDeadEnds($map);
 
-	$part1 = getPath($map, buildObjectPaths($map), '@');
-	echo 'Part 1: ', implode('', $part1[0]), ' in ', $part1[1], "\n";
+	$part1Objects = buildObjectPaths($map);
+	$part1 = distanceToCollectKeys($map, $part1Objects, '@', array_keys($part1Objects));
+	echo 'Part 1: ', $part1, "\n";
 
 	// Part 2
 
@@ -186,7 +175,6 @@
 	$map[$mid[1] + 1][$mid[0] - 1] = '@';
 	$map[$mid[1] + 1][$mid[0] + 1] = '@';
 
-	// Split into 4 smaller sub-maps.
 	function getSubMap($map, $minX, $minY, $maxX, $maxY) {
 		$newMap = [];
 		foreach (yieldXY($minX, $minY, $maxX, $maxY, true) as $x => $y) {
@@ -205,7 +193,6 @@
 	$maps[] = getSubMap($map, 0, $mid[1], $mid[0], $maxY);
 	$maps[] = getSubMap($map, $mid[0], $mid[1], $maxX, $maxY);
 
-
 	$part2 = 0;
 	foreach ($maps as $i => $mapInfo) {
 		[$m, $o] = $mapInfo;
@@ -216,11 +203,10 @@
 			$other = array_merge($other, array_keys($otherMapInfo[1]));
 		}
 
-		// Find the shortest path each sub-map would take, on the assumption that
-		// it had all the keys from the other maps (as it would do at some point)
-		$mapPath = getPath($m, $o, '@', [], $other);
-		echo 'Part 2 - Map ', $i, ': ', implode('', $mapPath[0]), ' in ', $mapPath[1], "\n";
-		$part2 += $mapPath[1];
+		$__KNOWN = []; // Clear Cache.
+		$ans = distanceToCollectKeys($m, $o, '@', array_keys($o), $other);
+		echo 'Part 2 - Map ', $i, ': ', $ans, "\n";
+		$part2 += $ans;
 	}
 
 	echo 'Part 2: ', $part2, "\n";
