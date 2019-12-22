@@ -27,7 +27,7 @@
 		$dx = $fromX - $destX;
 		$dy = $fromY - $destY;
 
-		return atan2($dx, $dy);
+		return ''.atan2($dx, $dy);
 	}
 
 	function getVisibleAsteroids($asteroids, $x, $y) {
@@ -38,7 +38,7 @@
 		foreach ($asteroids as $y2 => $row) {
 			foreach (array_keys($row) as $x2) {
 				if ($y2 == $y && $x2 == $x) { continue; }
-				$angle = ''.getAngle($x, $y, $x2, $y2);
+				$angle = getAngle($x, $y, $x2, $y2);
 
 				if (!isset($angles[$angle])) {
 					$angles[$angle] = [$x2, $y2];
@@ -59,7 +59,7 @@
 	foreach ($asteroids as $y => $row) {
 		foreach (array_keys($row) as $x) {
 
-			$visible = array_values(getVisibleAsteroids($asteroids, $x, $y));
+			$visible = getVisibleAsteroids($asteroids, $x, $y);
 			if (count($visible) > count($bestVisible)) {
 				$bestVisible = $visible;
 				$bestX = $x;
@@ -76,7 +76,6 @@
 		foreach ($bestVisible as $v) {
 			$highlightVisibleAsteroids[$v[1]][$v[0]] = "\033[1;31m" . '#' . "\033[0m";
 		}
-
 
 		drawMap($highlightVisibleAsteroids, true, false);
 	}
