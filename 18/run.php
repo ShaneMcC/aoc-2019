@@ -187,39 +187,40 @@
 	$map[$mid[1] + 1][$mid[0] + 1] = '@';
 
 	// Split into 4 smaller sub-maps.
-	$map1 = [];
-	$map2 = [];
-	$map3 = [];
-	$map4 = [];
+	function getSubMap($map, $minX, $minY, $maxX, $maxY) {
+		$newMap = [];
+		foreach (yieldXY($minX, $minY, $maxX, $maxY, true) as $x => $y) {
+			$newMap[$y][$x] = $map[$y][$x];
+		}
+
+		return [$newMap, buildObjectPaths($newMap)];
+	}
 
 	$maxX = max(array_keys($map[0]));
 	$maxY = max(array_keys($map));
 
-	foreach (yieldXY(0, 0, $mid[0], $mid[1], true) as $x => $y) { $map1[$y][$x] = $map[$y][$x]; }
-	foreach (yieldXY($mid[0], 0, $maxX, $mid[1], true) as $x => $y) { $map2[$y][$x] = $map[$y][$x]; }
-	foreach (yieldXY(0, $mid[1], $mid[0], $maxY, true) as $x => $y) { $map3[$y][$x] = $map[$y][$x]; }
-	foreach (yieldXY($mid[0], $mid[1], $maxX, $maxY, true) as $x => $y) { $map4[$y][$x] = $map[$y][$x]; }
-
-	// Find paths and objects for each of the smaller maps:
-	$map1Objects = buildObjectPaths($map1);
-	$map2Objects = buildObjectPaths($map2);
-	$map3Objects = buildObjectPaths($map3);
-	$map4Objects = buildObjectPaths($map4);
-
-	// Find the shortest path each sub-map would take, on the assumption that
-	// it had all the keys from the other maps (as it would do at some point)
-	$map1Path = getPath($map1, $map1Objects, '@', [], array_merge(array_keys($map2Objects), array_keys($map3Objects), array_keys($map4Objects)));
-	echo 'Map 1: ', implode('', $map1Path[0]), ' in ', $map1Path[1], "\n";
-
-	$map2Path = getPath($map2, $map2Objects, '@', [], array_merge(array_keys($map1Objects), array_keys($map3Objects), array_keys($map4Objects)));
-	echo 'Map 2: ', implode('', $map2Path[0]), ' in ', $map2Path[1], "\n";
-
-	$map3Path = getPath($map3, $map3Objects, '@', [], array_merge(array_keys($map1Objects), array_keys($map2Objects), array_keys($map4Objects)));
-	echo 'Map 3: ', implode('', $map3Path[0]), ' in ', $map3Path[1], "\n";
-
-	$map4Path = getPath($map4, $map4Objects, '@', [], array_merge(array_keys($map1Objects), array_keys($map2Objects), array_keys($map3Objects)));
-	echo 'Map 4: ', implode('', $map4Path[0]), ' in ', $map4Path[1], "\n";
+	$maps = [];
+	$maps[] = getSubMap($map, 0, 0, $mid[0], $mid[1]);
+	$maps[] = getSubMap($map, $mid[0], 0, $maxX, $mid[1]);
+	$maps[] = getSubMap($map, 0, $mid[1], $mid[0], $maxY);
+	$maps[] = getSubMap($map, $mid[0], $mid[1], $maxX, $maxY);
 
 
-	// Add them all together, and hope for the best...
-	echo 'Part 2: ', ($map1Path[1] + $map2Path[1] + $map3Path[1] + $map4Path[1]), "\n";
+	$part2 = 0;
+	foreach ($maps as $i => $mapInfo) {
+		[$m, $o] = $mapInfo;
+
+		$other = [];
+		foreach ($maps as $j => $otherMapInfo) {
+			if ($i == $j) { continue; }
+			$other = array_merge($other, array_keys($otherMapInfo[1]));
+		}
+
+		// Find the shortest path each sub-map would take, on the assumption that
+		// it had all the keys from the other maps (as it would do at some point)
+		$mapPath = getPath($m, $o, '@', [], $other);
+		echo 'Part 2 - Map ', $i, ': ', implode('', $mapPath[0]), ' in ', $mapPath[1], "\n";
+		$part2 += $mapPath[1];
+	}
+
+	echo 'Part 2: ', $part2, "\n";
