@@ -2,7 +2,8 @@ FROM php:7.4-cli-alpine
 
 ADD entrypoint.sh /entrypoint.sh
 
-RUN apk add --no-cache bash && \
+RUN apk add --no-cache bash gmp gmp-dev && \
+    docker-php-ext-install gmp && \
     chmod +x /entrypoint.sh && \
     chown -R nobody:nobody /entrypoint.sh
 

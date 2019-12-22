@@ -2,7 +2,10 @@ FROM akondas/php:8.0-cli-alpine
 
 ADD entrypoint.sh /entrypoint.sh
 
-RUN apk add --no-cache bash && \
+RUN apk add --no-cache bash gmp gmp-dev && \
+    docker-php-source extract && \
+    if [ -e /usr/src/php/php-src-master ]; then mv /usr/src/php/php-src-master/* /usr/src/php/; fi && \
+    docker-php-ext-install gmp && \
     chmod +x /entrypoint.sh && \
     chown -R nobody:nobody /entrypoint.sh
 
