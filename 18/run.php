@@ -170,28 +170,42 @@
 	$map[$mid[1] + 1][$mid[0]] = '#';
 
 	// Allocate New Start Points
-	$map[$mid[1] - 1][$mid[0] - 1] = '@';
-	$map[$mid[1] - 1][$mid[0] + 1] = '@';
-	$map[$mid[1] + 1][$mid[0] - 1] = '@';
-	$map[$mid[1] + 1][$mid[0] + 1] = '@';
+	$startPoints = [];
+	$startPoints[] = [$mid[0] - 1, $mid[1] - 1];
+	$startPoints[] = [$mid[0] + 1, $mid[1] - 1];
+	$startPoints[] = [$mid[0] - 1, $mid[1] + 1];
+	$startPoints[] = [$mid[0] + 1, $mid[1] + 1];
 
-	function getSubMap($map, $minX, $minY, $maxX, $maxY) {
-		$newMap = [];
-		foreach (yieldXY($minX, $minY, $maxX, $maxY, true) as $x => $y) {
-			$newMap[$y][$x] = $map[$y][$x];
+	foreach ($startPoints as $sp) { $map[$sp[1]][$sp[0]] = '@'; }
+
+	function floodMap($map, $start) {
+		$queue = [$start];
+		while (!empty($queue)) {
+			[$x, $y] = array_shift($queue);
+			$map[$y][$x] = '#';
+
+			if ($map[$y - 1][$x] != '#') { $queue[] = [$x, $y - 1]; }
+			if ($map[$y + 1][$x] != '#') { $queue[] = [$x, $y + 1]; }
+			if ($map[$y][$x - 1] != '#') { $queue[] = [$x - 1, $y]; }
+			if ($map[$y][$x + 1] != '#') { $queue[] = [$x + 1, $y]; }
+		}
+		return $map;
+	}
+
+	function getSubMap($map, $closed) {
+		$newMap = $map;
+		foreach ($closed as $point) {
+			$newMap = floodMap($newMap, $point);
 		}
 
 		return [$newMap, buildObjectPaths($newMap)];
 	}
 
-	$maxX = max(array_keys($map[0]));
-	$maxY = max(array_keys($map));
-
 	$maps = [];
-	$maps[] = getSubMap($map, 0, 0, $mid[0], $mid[1]);
-	$maps[] = getSubMap($map, $mid[0], 0, $maxX, $mid[1]);
-	$maps[] = getSubMap($map, 0, $mid[1], $mid[0], $maxY);
-	$maps[] = getSubMap($map, $mid[0], $mid[1], $maxX, $maxY);
+	$maps[] = getSubMap($map, [$startPoints[1], $startPoints[2], $startPoints[3]]);
+	$maps[] = getSubMap($map, [$startPoints[0], $startPoints[2], $startPoints[3]]);
+	$maps[] = getSubMap($map, [$startPoints[0], $startPoints[1], $startPoints[3]]);
+	$maps[] = getSubMap($map, [$startPoints[0], $startPoints[1], $startPoints[2]]);
 
 	$part2 = 0;
 	foreach ($maps as $i => $mapInfo) {
