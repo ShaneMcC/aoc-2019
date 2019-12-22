@@ -169,6 +169,17 @@
 	echo 'Part 1: ', $part1, "\n";
 
 	// Part 2
+	//
+	// TODO: This code currently makes an assumption that the best path that
+	//       collects all the keys in a sub-map, is the same best-path assuming
+	//       you have all the keys from the other sub-maps.
+	//
+	//       This assumption won't hold true for certain arrangements of
+	//       blocking keys, but seems to hold true for all the real inputs I've
+	//       looked at so far. (It notably fails for the final test input.)
+	//
+	//       Other attempts that handle it better are so slow that I'm sticking
+	//       with this for now.
 
 	// Split map into 4 smaller maps.
 	$mid = getLocations($map)['@']['loc'];
