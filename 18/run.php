@@ -127,7 +127,7 @@
 
 		$wanted = array_diff($wanted, [$from]);
 
-		if (empty($wanted)) { return 0; }
+		if (empty($wanted)) { return [0, $from]; }
 
 		$id = implode('', $wanted) . ','. $from;
 		if (isset($__KNOWN[$id])) {
@@ -135,20 +135,31 @@
 			return $__KNOWN[$id]['result'];
 		}
 
-		$result = PHP_INT_MAX;
-
 		$allKnown = array_merge($known, array_keys($objects));
 		foreach ($wanted as $w) { $allKnown = array_diff($allKnown, [$w]); }
 
 		$reachable = getReachableObjects($map, $objects, $from, $allKnown);
 
+		$result = PHP_INT_MAX;
+		$path = $from;
+
+		$bestResult = PHP_INT_MAX;
+		$bestPath = '';
 		foreach ($reachable as $key) {
-			$d = $objects[$from]['to'][$key]['steps'] + distanceToCollectKeys($map, $objects, $key, $wanted, $known);
-			$result = min($result, $d);
+			$dTCK = distanceToCollectKeys($map, $objects, $key, $wanted, $known);
+			$d = $objects[$from]['to'][$key]['steps'] + $dTCK[0];
+			if ($d < $bestResult) {
+				$bestResult = $d;
+				$bestPath = $dTCK[1];
+			}
 		}
 
-		$__KNOWN[$id] = ['hit' => 0, 'result' => $result];
-		return $result;
+		$result = $bestResult;
+		$path .= $bestPath;
+
+		$__KNOWN[$id] = ['hit' => 0, 'result' => [$result, $path]];
+
+		return $__KNOWN[$id]['result'];
 	}
 
 	$map = removeDeadEnds($map);
@@ -219,8 +230,8 @@
 
 		$__KNOWN = []; // Clear Cache.
 		$ans = distanceToCollectKeys($m, $o, '@', array_keys($o), $other);
-		echo 'Part 2 - Map ', $i, ': ', $ans, "\n";
-		$part2 += $ans;
+		echo 'Part 2 - Map ', $i, ': Took path ', $ans[1], ' in ', $ans[0], ' steps.', "\n";
+		$part2 += $ans[0];
 	}
 
 	echo 'Part 2: ', $part2, "\n";
