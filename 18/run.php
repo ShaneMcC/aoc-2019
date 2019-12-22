@@ -176,7 +176,12 @@
 	//
 	//       This assumption won't hold true for certain arrangements of
 	//       blocking keys, but seems to hold true for all the real inputs I've
-	//       looked at so far. (It notably fails for the final test input.)
+	//       looked at so far. (It notably fails for the final test input, we
+	//       try "dfeabg" whereas we should be doing "eabdfg" - this is because
+	//       the top-right robot shortest path is to collect 'h' first which is
+	//       gated behind 'E'. Top-Left absolute-shortest relies on collecting
+	//       'e' en-route to/from 'f' instead (which is 2 shorter than doing it
+	//       first.)
 	//
 	//       Other attempts that handle it better are so slow that I'm sticking
 	//       with this for now.
