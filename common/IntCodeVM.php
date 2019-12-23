@@ -392,6 +392,6 @@
 		 * @param $data Data to parse/
 		 */
 		public static function parseInstrLines($input) {
-			return explode(',', $input);
+			return explode(',', str_replace(' ', '', $input));
 		}
 	}
