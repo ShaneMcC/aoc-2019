@@ -1,5 +1,9 @@
 #!/usr/bin/php
 <?php
+	$__CLI['long'] = ['step'];
+	$__CLI['extrahelp'] = [];
+	$__CLI['extrahelp'][] = '      --step               Run each computer step-by-step rather than running until there is I/O (Slower)';
+
 	require_once(dirname(__FILE__) . '/../common/common.php');
 	require_once(dirname(__FILE__) . '/../common/IntCodeVM.php');
 	$input = getInputLine();
@@ -14,7 +18,7 @@
 	$nat = null;
 	$part1 = false;
 	$lastNatY = null;
-	$stepByStep = false;
+	$stepByStep = isset($__CLIOPTS['step']);
 
 	$empty = [];
 	while (true) {
