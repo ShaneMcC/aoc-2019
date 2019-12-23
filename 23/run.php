@@ -14,35 +14,43 @@
 	$nat = null;
 	$part1 = false;
 	$lastNatY = null;
+	$stepByStep = false;
 
 	$empty = [];
 	while (true) {
 		foreach ($computers as $cid => $c) {
-			try {
-				$c->step();
+			while (true) {
+				try {
+					$c->step();
 
-				if ($c->getOutputLength() == 3) {
-					$addr = $c->getOutput();
-					$x = $c->getOutput();
-					$y = $c->getOutput();
+					if ($c->getOutputLength() == 3) {
+						$addr = $c->getOutput();
+						$x = $c->getOutput();
+						$y = $c->getOutput();
 
-					if ($addr == 255) {
-						if ($part1 == false) {
-							echo 'Part 1: ', $y, "\n";
-							$part1 = true;
+						if ($addr == 255) {
+							if ($part1 == false) {
+								echo 'Part 1: ', $y, "\n";
+								$part1 = true;
+							}
+
+							$nat = [$x, $y];
+						} else {
+							unset($empty[$addr]);
+							$computers[$addr]->appendInput($x);
+							$computers[$addr]->appendInput($y);
 						}
 
-						$nat = [$x, $y];
-					} else {
-						unset($empty[$addr]);
-						$computers[$addr]->appendInput($x);
-						$computers[$addr]->appendInput($y);
+						break;
 					}
+
+				} catch (Exception $e) {
+					$empty[$cid] = true;
+					$c->appendInput(-1);
+					break;
 				}
 
-			} catch (Exception $e) {
-				$empty[$cid] = true;
-				$c->appendInput(-1);
+				if ($stepByStep) { break; }
 			}
 		}
 
@@ -55,7 +63,7 @@
 				break;
 			}
 
+			unset($empty[0]);
 			$lastNatY = $nat[1];
-			$nat = null;
 		}
 	}
