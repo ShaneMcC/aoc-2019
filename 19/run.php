@@ -8,7 +8,8 @@
 		$vm = new IntCodeVM(IntCodeVM::parseInstrLines($input));
 		$vm->appendInput($x);
 		$vm->appendInput($y);
-		while (count($vm->getAllOutput()) == 0) { $vm->step(); }
+		$vm->useInterrupts(true);
+		try { $vm->run(); } catch (OutputGivenInterrupt $ex) { }
 
 		return $vm->getAllOutput()[0];
 	}

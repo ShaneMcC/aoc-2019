@@ -26,6 +26,7 @@
 		$oxygen = [];
 
 		$robot = new IntCodeVM(IntCodeVM::parseInstrLines($input));
+		$robot->useInterrupts(true);
 		$robot->setMiscData('x', 0);
 		$robot->setMiscData('y', 0);
 		$robots = [$robot];
@@ -40,31 +41,29 @@
 				$y = $robot->getMiscData('y');
 
 				try {
-					$robot->step();
+					$robot->run();
 					if ($robot->hasExited()) { unset($robots[$key]); continue; }
 
-					if ($robot->getOutputLength() == 1) {
-						$type = $robot->getOutput();
+				} catch (OutputGivenInterrupt $ex) {
+					$type = $robot->getOutput();
 
-						$checkY = $y + $directions[$direction]['movement']['y'];
-						$checkX = $x + $directions[$direction]['movement']['x'];
+					$checkY = $y + $directions[$direction]['movement']['y'];
+					$checkX = $x + $directions[$direction]['movement']['x'];
 
-						$map[$checkY][$checkX] = $type;
-						if ($type == 0) {
-							// Kill bots that hit a wall
-							unset($robots[$key]);
-						} else {
-							// Move the bot.
-							$robot->setMiscData('x', $checkX);
-							$robot->setMiscData('y', $checkY);
-						}
-
-						if ($type == 2) { $oxygen = [$checkX, $checkY]; }
-
-						if ($draw) { drawMap($map, true); usleep(1000); }
+					$map[$checkY][$checkX] = $type;
+					if ($type == 0) {
+						// Kill bots that hit a wall
+						unset($robots[$key]);
+					} else {
+						// Move the bot.
+						$robot->setMiscData('x', $checkX);
+						$robot->setMiscData('y', $checkY);
 					}
 
-				} catch (Exception $ex) {
+					if ($type == 2) { $oxygen = [$checkX, $checkY]; }
+
+					if ($draw) { drawMap($map, true); usleep(1000); }
+				} catch (InputWantedException $ex) {
 					// Robot wants input, kill it and spawn replacements.
 					unset($robots[$key]);
 

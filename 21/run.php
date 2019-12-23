@@ -6,6 +6,7 @@
 
 	function runBot($input, $instructions) {
 		$vm = new IntCodeVM(IntCodeVM::parseInstrLines($input));
+		$vm->useInterrupts(false);
 
 		// Give the VM the instructions.
 		// foreach (str_split(implode("\n", $instructions) . "\n") as $i) { $vm->appendInput(ord($i)); }

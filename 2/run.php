@@ -6,6 +6,7 @@
 
 	function computer($input, $noun, $verb) {
 		$vm = new IntCodeVM(IntCodeVM::parseInstrLines($input));
+		$vm->useInterrupts(false);
 
 		$vm->setData(1, $noun);
 		$vm->setData(2, $verb);

@@ -11,6 +11,7 @@
 	$computers = [];
 	for ($i = 0; $i < 50; $i++) {
 		$vm = new IntCodeVM(IntCodeVM::parseInstrLines($input));
+		$vm->useInterrupts(true);
 		$vm->appendInput($i);
 		$computers[] = $vm;
 	}
@@ -23,10 +24,13 @@
 	$empty = [];
 	while (true) {
 		foreach ($computers as $cid => $c) {
+			// Loop and step() rather than using run() becuase we will keep
+			// going until we get 3 outputs (or 1 input) not just 1 output.
+			// Slightly more efficient this way.
 			while (true) {
 				try {
 					$c->step();
-
+				} catch (OutputGivenInterrupt $e) {
 					if ($c->getOutputLength() == 3) {
 						$addr = $c->getOutput();
 						$x = $c->getOutput();
@@ -47,14 +51,11 @@
 
 						break;
 					}
-
-				} catch (Exception $e) {
+				} catch (InputWantedException $e) {
 					$empty[$cid] = true;
 					$c->appendInput(-1);
 					break;
 				}
-
-				if ($stepByStep) { break; }
 			}
 		}
 

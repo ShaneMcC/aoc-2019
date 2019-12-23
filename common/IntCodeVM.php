@@ -61,14 +61,17 @@
 			 * @param $modes Parameter modes.
 			 */
 			$this->instrs['3'] = ['INPUT', 1, function($vm, $args, $modes = []) {
+				$vm->wantsInput = true;
+
 				[$z] = $args;
 				$zMode = $modes[0];
 
 				$input = $vm->getInput();
 				if ($input !== NULL) {
+					$vm->wantsInput = false;
 					return $vm->setData($z, $input, $zMode);
-				} else {
-					throw new Exception('No Input Available');
+				} else if ($vm->inputErrorInterrupt) {
+					throw new InputWantedException('No Input Available');
 				}
 			}];
 
@@ -87,7 +90,9 @@
 
 				$zMode = $modes[0];
 
-				return $vm->appendOutput($vm->getData($z, $zMode));
+				$r = $vm->appendOutput($vm->getData($z, $zMode));
+				if ($vm->outputInterrupt) { throw new OutputGivenInterrupt(); }
+				return $r;
 			}];
 
 
@@ -223,6 +228,28 @@
 			}];
 		}
 
+		/** Does input interrupt (Throws an OutputGivenInterrupt) */
+		protected $outputInterrupt = false;
+
+		/** Does an empty input queue throw an exception (Throws an InputWantedException) */
+		protected $inputErrorInterrupt = true;
+
+		/** Are we waiting for input? */
+		protected $wantsInput = false;
+
+		public function useInputInterrupt($value) {
+			$this->inputErrorInterrupt = $value;
+		}
+
+		public function useOutputInterrupt($value) {
+			$this->outputInterrupt = $value;
+		}
+
+		public function useInterrupts($value) {
+			$this->useInputInterrupt($value);
+			$this->useOutputInterrupt($value);
+		}
+
 		// Turn output into a queue.
 		public function clearOutput() { $this->output = []; }
 		public function getOutputLength() { return count($this->output); }
@@ -241,6 +268,8 @@
 		public function getInput() { return array_shift($this->input); }
 		public function getAllInput() { return $this->input; }
 
+		public function wantsInput() { return $this->wantsInput; }
+
 		// Relative Base
 		protected $relativeBase = 0;
 		public function getRelativeBase() { return $this->relativeBase; }
@@ -253,7 +282,7 @@
 		}
 
 		public function saveState() {
-			return ['in' => $this->input, 'out' => $this->output, 'loc' => $this->location, 'data' => $this->data, 'misc' => $this->miscData, 'exitCode' => $this->exitCode, 'exited' => $this->exited];
+			return ['in' => $this->input, 'out' => $this->output, 'loc' => $this->location, 'data' => $this->data, 'misc' => $this->miscData, 'exitCode' => $this->exitCode, 'exited' => $this->exited, 'wantsInput' => $this->wantsInput, 'interrupts' => ['in' => $this->inputErrorInterrupt, 'out' => $this->outputInterrupt]];
 		}
 
 		public function loadState($state) {
@@ -264,6 +293,9 @@
 			$this->miscData = $state['misc'];
 			$this->exitCode = $state['exitCode'];
 			$this->exited = $state['exited'];
+			$this->wantsInput = $state['wantsInput'];
+			$this->inputErrorInterrupt = $state['interrupts']['in'];
+			$this->outputInterrupt = $state['interrupts']['out'];
 		}
 
 		// Debugging for Jump.
@@ -296,7 +328,7 @@
 				return isset($this->data[$this->getRelativeBase() + $loc]) ? $this->data[$this->getRelativeBase() + $loc] : 0;
 			}
 
-			throw new Exception('Error getting data at: ' . $loc . ' in mode: ' . $mode);
+			throw new BadDataLocationException('Error getting data at: ' . $loc . ' in mode: ' . $mode);
 		}
 
 		/**
@@ -319,7 +351,7 @@
 				return;
 			}
 
-			throw new Exception('Error setting data at: ' . $loc . ' in mode: ' . $mode);
+			throw new BadDataLocationException('Error setting data at: ' . $loc . ' in mode: ' . $mode);
 		}
 
 
@@ -384,6 +416,14 @@
 				echo $out, "\n";
 				usleep($this->sleep);
 			}
+
+			if ($this->wantsInput) {
+				// Step back to repeat the input request.
+				$this->location--;
+				$this->location--;
+			}
+
+			return !$this->wantsInput;
 		}
 
 		/**
@@ -395,3 +435,8 @@
 			return explode(',', str_replace(' ', '', $input));
 		}
 	}
+
+	class IntCodeException extends VMException { }
+	class InputWantedException extends IntCodeException { }
+	class OutputGivenInterrupt extends IntCodeException implements VMInterrupt { }
+

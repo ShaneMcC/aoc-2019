@@ -15,6 +15,7 @@
 		$grid = [];
 
 		$game = new IntCodeVM(IntCodeVM::parseInstrLines($input));
+		$game->useInterrupts(true);
 
 		if ($freePlay) { $game->setData(0, 2); }
 
@@ -34,7 +35,7 @@
 				$game->step();
 
 				if ($game->hasExited()) { break; }
-
+			} catch (OutputGivenInterrupt $ex) {
 				// Wait until we have 3 outputs.
 				if ($game->getOutputLength() == 3) {
 					$x = $game->getOutput();
@@ -74,7 +75,7 @@
 						if ($type != 0) { usleep(25000); }
 					}
 				}
-			} catch (Exception $ex) {
+			} catch (InputWantedException $ex) {
 				if ($ballX < $paddleX) { $input = -1; }
 				else if ($ballX > $paddleX) { $input = 1; }
 				else { $input = 0; }

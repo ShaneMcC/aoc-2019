@@ -12,6 +12,7 @@
 			$vm->setMiscData('pid', $amp);
 			$vm->appendInput(array_shift($phaseSettings));
 			$vm->setDebug(isDebug());
+			$vm->useInterrupts(false);
 			$amps[$amp] = $vm;
 		}
 
@@ -19,7 +20,8 @@
 		while (!$hasFinished) {
 			foreach ($amps as $amp => $vm) {
 				$vm->appendInput($lastOutput);
-				try { $vm->run(); } catch (Exception $ex) { /* Need new input, so we move on to the next one. */ }
+				$vm->run(); // Runs until input is needed.
+
 				$hasFinished |= $vm->hasExited();
 				$lastOutput = $vm->getOutput();
 			}
@@ -27,7 +29,6 @@
 
 		return $lastOutput;
 	}
-
 
 	function test($input, $possibleSettings) {
 		$answer = 0;

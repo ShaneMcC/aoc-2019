@@ -6,6 +6,7 @@
 
 	function getInitialView($input) {
 		$vm = new IntCodeVM(IntCodeVM::parseInstrLines($input));
+		$vm->useInterrupts(false);
 		$vm->run();
 
 		$output = '';
@@ -155,6 +156,7 @@
 	}
 
 	$vm = new IntCodeVM(IntCodeVM::parseInstrLines($input));
+	$vm->useInterrupts(false);
 	$vm->setData(0, 2);
 
 	// Give the VM the instructions.

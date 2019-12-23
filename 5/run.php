@@ -8,6 +8,7 @@
 		$vm = new IntCodeVM(IntCodeVM::parseInstrLines($input));
 		$vm->setDebug(isDebug());
 		$vm->appendInput($system);
+		$vm->useInterrupts(false);
 		$vm->run();
 		$output = $vm->getAllOutput();
 		return array_pop($output);

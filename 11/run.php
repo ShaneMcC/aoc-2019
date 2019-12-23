@@ -27,6 +27,7 @@
 		$map[$y][$x] = $startColour;
 
 		$robot = new IntCodeVM(IntCodeVM::parseInstrLines($input));
+		$robot->useInterrupts(true);
 
 		while (!$robot->hasExited()) {
 			try {
@@ -34,7 +35,7 @@
 
 				if ($robot->hasExited()) { break; }
 
-				// Wait until we have 2 outputs.
+			} catch (OutputGivenInterrupt $ex) {
 				if ($robot->getOutputLength() == 2) {
 					if (isDebug()) { echo 'Robot output: ', json_encode($robot->getAllOutput()), "\n"; }
 
@@ -57,7 +58,7 @@
 					$x += $directions[$direction]['movement']['x'];
 					$y += $directions[$direction]['movement']['y'];
 				}
-			} catch (Exception $ex) {
+			} catch (InputWantedException $ex) {
 				// Robot wants input.
 				if (isset($map[$y][$x])) {
 					$robot->appendInput($map[$y][$x]);

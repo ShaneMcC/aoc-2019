@@ -179,7 +179,7 @@
 		 */
 		public function getInstr($instr) {
 			if (isset($this->instrs[$instr])) { return $this->instrs[$instr]; }
-			throw new Exception('Unknown Instr: ' . $instr);
+			throw new NoSuchInstrException('Unknown Instr: ' . $instr);
 		}
 
 		/**
@@ -212,7 +212,7 @@
 		public function getData($loc = null) {
 			if ($loc === null) { $loc = $this->getLocation(); }
 			if (isset($this->data[$loc])) { return $this->data[$loc]; }
-			throw new Exception('Unknown Data Location: ' . $loc);
+			throw new BadDataLocationException('Unknown Data Location: ' . $loc);
 		}
 
 		/**
@@ -226,7 +226,7 @@
 			if (isset($this->data[$loc])) {
 				$this->data[$loc] = $val;
 			} else {
-				throw new Exception('Unknown Data Location: ' . $loc);
+				throw new BadDataLocationException('Unknown Data Location: ' . $loc);
 			}
 		}
 
@@ -278,15 +278,17 @@
 				}
 
 				try {
-					$this->doStep();
+					return $this->doStep();
 				} catch (Throwable $ex) {
-					// Reset Location Pointer to the same instruction then
-					// rethrow the error.
-					$this->location = $startLocation;
+					// Reset Location Pointer if this an exception rather than
+					// just an interrupt.
+					if (!($ex instanceof VMInterrupt)) {
+						$this->location = $startLocation;
+					}
+
+					// Rethrow the error.
 					throw $ex;
 				}
-
-				return TRUE;
 			} else {
 				return FALSE;
 			}
@@ -307,6 +309,7 @@
 			list($instr, $data) = $next;
 			$ins = $this->getInstr($instr);
 			$ins($this, $data);
+			return TRUE;
 		}
 
 		/**
@@ -376,3 +379,8 @@
 			return $instr[0] . ' [' . implode(' ', $instr[1]) . ']';
 		}
 	}
+
+	interface VMInterrupt { }
+	class VMException extends Exception { }
+	class NoSuchInstrException extends VMException { }
+	class BadDataLocationException extends VMException { }
