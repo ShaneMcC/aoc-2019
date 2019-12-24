@@ -55,3 +55,101 @@ To understand the nature of the bugs, watch for the first time a layout of bugs 
 To calculate the biodiversity rating for this layout, consider each tile left-to-right in the top row, then left-to-right in the second row, and so on. Each of these tiles is worth biodiversity points equal to increasing powers of two: 1, 2, 4, 8, 16, 32, and so on. Add up the biodiversity points for tiles with bugs; in this example, the 16th tile (32768 points) and 22nd tile (2097152 points) have bugs, a total biodiversity rating of 2129920.
 
 What is the biodiversity rating for the first layout that appears twice?
+
+
+Tile 19 has four adjacent tiles: 14, 18, 20, and 24.
+Tile G has four adjacent tiles: B, F, H, and L.
+Tile D has four adjacent tiles: 8, C, E, and I.
+Tile E has four adjacent tiles: 8, D, 14, and J.
+Tile 14 has eight adjacent tiles: 9, E, J, O, T, Y, 15, and 19.
+Tile N has eight adjacent tiles: I, O, S, and five tiles within the sub-grid marked ?.
+The rules about bugs living and dying are the same as before.
+
+For example, consider the same initial state as above:
+
+....#
+#..#.
+#.?##
+..#..
+#....
+The center tile is drawn as ? to indicate the next recursive grid. Call this level 0; the grid within this one is level 1, and the grid that contains this one is level -1. Then, after ten minutes, the grid at each level would look like this:
+
+Depth -5:
+..#..
+.#.#.
+..?.#
+.#.#.
+..#..
+
+Depth -4:
+...#.
+...##
+..?..
+...##
+...#.
+
+Depth -3:
+#.#..
+.#...
+..?..
+.#...
+#.#..
+
+Depth -2:
+.#.##
+....#
+..?.#
+...##
+.###.
+
+Depth -1:
+#..##
+...##
+..?..
+...#.
+.####
+
+Depth 0:
+.#...
+.#.##
+.#?..
+.....
+.....
+
+Depth 1:
+.##..
+#..##
+..?.#
+##.##
+#####
+
+Depth 2:
+###..
+##.#.
+#.?..
+.#.##
+#.#..
+
+Depth 3:
+..###
+.....
+#.?..
+#....
+#...#
+
+Depth 4:
+.###.
+#..#.
+#.?..
+##.#.
+.....
+
+Depth 5:
+####.
+#..#.
+#.?#.
+####.
+.....
+In this example, after 10 minutes, a total of 99 bugs are present.
+
+Starting with your scan, how many bugs are present after 200 minutes?
