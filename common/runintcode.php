@@ -1,7 +1,11 @@
 #!/usr/bin/php
 <?php
-	$__CLI['long'] = ['output', 'fast', 'ascii', 'nodebug'];
+	$__CLI['long'] = ['output', 'fast', 'ascii', 'nodebug', 'in0:', 'in1:', 'in2:', 'out0'];
 	$__CLI['extrahelp'] = [];
+	$__CLI['extrahelp'][] = '      --in0 <val>          Set <value> into mem[0]';
+	$__CLI['extrahelp'][] = '      --in1 <val>          Set <value> into mem[1]';
+	$__CLI['extrahelp'][] = '      --in2 <val>          Set <value> into mem[2]';
+	$__CLI['extrahelp'][] = '      --out0               Show the final value at mem[0]';
 	$__CLI['extrahelp'][] = '      --output             Show all output at the end.';
 	$__CLI['extrahelp'][] = '      --ascii              Assume output is ascii';
 	$__CLI['extrahelp'][] = '      --fast               Remove sleep time on debug.';
@@ -17,6 +21,14 @@
 		$vm->setDebug(true);
 		if (isset($__CLIOPTS['fast'])) {
 			$vm->setDebug(true, 0);
+		}
+	}
+
+	for ($i = 0; $i <= 2; $i++) {
+		$name = 'in' . $i;
+		if (isset($__CLIOPTS[$name])) {
+			$val = is_array($__CLIOPTS[$name]) ? $__CLIOPTS[$name][count($__CLIOPTS[$name]) - 1] : $__CLIOPTS[$name];
+			$vm->setData($i, $val);
 		}
 	}
 
@@ -44,6 +56,10 @@
 		}
 	}
 	echo 'End.', "\n\n";
+
+	if (isset($__CLIOPTS['out0'])) {
+		echo 'Output at 0: ', $vm->getData(0), "\n";
+	}
 
 	if (isset($__CLIOPTS['output'])) {
 		echo 'All output: ', "\n";
