@@ -6,6 +6,7 @@
 	$initialMap = [0 => []];
 	foreach ($input as $row) { $initialMap[0][] = str_split($row); }
 
+	// Add a nice new empty layer to our map.
 	function addLayer($map, $layerID) {
 		foreach (yieldXY(0, 0, 4, 4, true) as $x => $y) {
 			$map[$layerID][$y][$x] = '.';
@@ -14,8 +15,11 @@
 		return $map;
 	}
 
-	function hasBugs($mapLayer) {
-		foreach ($mapLayer as $y => $row) {
+	// Check if a given layer has any bugs.
+	function hasBugs($map, $layer) {
+		if (!isset($map[$layer][0][0])) { return FALSE; }
+
+		foreach ($map[$layer] as $y => $row) {
 			foreach ($row as $x => $cell) {
 				if ($cell == '#') { return true; }
 			}
@@ -29,15 +33,12 @@
 
 		$hasLayers = count($map) > 1;
 
-		$outer = min(array_keys($map));
-		$inner = max(array_keys($map));
-
 		foreach ($map as $layer => $layerMap) {
 			foreach ($layerMap as $y => $row) {
 				foreach ($row as $x => $cell) {
-					$adjacentBugs = 0;
-					if ($cell == '?') { continue; }
+					if ($cell == '?') { continue; } // Ignore magic inner space.
 
+					// Cells to check for bugs.
 					$checkCells = [];
 
 					// Check immediately adjacent
@@ -48,50 +49,40 @@
 
 					if ($hasLayers) {
 						// Check outer layer if appropriate
-						if ($x == 0) {
-							$checkCells[] = [$layer - 1, 1, 2];
-						}
-						if ($y == 0) {
-							$checkCells[] = [$layer - 1, 2, 1];
-						}
-						if ($x == 4) {
-							$checkCells[] = [$layer - 1, 3, 2];
-						}
-						if ($y == 4) {
-							$checkCells[] = [$layer - 1, 2, 3];
-						}
+						if ($x == 0) { $checkCells[] = [$layer - 1, 1, 2]; } // OUTER LEFT-MIDDLE
+						if ($y == 0) { $checkCells[] = [$layer - 1, 2, 1]; } // OUTER UP-MIDDLE
+						if ($x == 4) { $checkCells[] = [$layer - 1, 3, 2]; } // OUTER RIGHT-MIDDLE
+						if ($y == 4) { $checkCells[] = [$layer - 1, 2, 3]; } // OUTER DOWN-MIDDLE
 
 						// Check inner layer.
 						if ($x == 2 && $y == 1) {
-							for ($c = 0; $c < 5; $c++) {
-								$checkCells[] = [$layer + 1, $c, 0];
-							}
+							for ($c = 0; $c < 5; $c++) { $checkCells[] = [$layer + 1, $c, 0]; } // INNER TOP-ROW
 						}
 						if ($x == 1 && $y == 2) {
-							for ($c = 0; $c < 5; $c++) {
-								$checkCells[] = [$layer + 1, 0, $c];
-							}
+							for ($c = 0; $c < 5; $c++) { $checkCells[] = [$layer + 1, 0, $c]; } // INNER LEFT-COLUMN
 						}
 						if ($x == 2 && $y == 3) {
-							for ($c = 0; $c < 5; $c++) {
-								$checkCells[] = [$layer + 1, $c, 4];
-							}
+							for ($c = 0; $c < 5; $c++) { $checkCells[] = [$layer + 1, $c, 4]; }  // INNER BOTTOM-ROW
 						}
 						if ($x == 3 && $y == 2) {
-							for ($c = 0; $c < 5; $c++) {
-								$checkCells[] = [$layer + 1, 4, $c];
-							}
+							for ($c = 0; $c < 5; $c++) { $checkCells[] = [$layer + 1, 4, $c]; }  // INNER RIGHT-COLUMN
 						}
 					}
 
+					// How many adjacent bugs do we have?
+					$adjacentBugs = 0;
 					foreach ($checkCells as $c) {
 						[$cL, $cX, $cY] = $c;
 						if (isset($map[$cL][$cY][$cX]) && $map[$cL][$cY][$cX] == '#') { $adjacentBugs++; }
 					}
 
 					if ($cell == '#') {
+						// A bug dies (becoming an empty space) unless there
+						// is exactly one bug adjacent to it.
 						$newMap[$layer][$y][$x] = ($adjacentBugs == 1) ? '#' : '.';
 					} else if ($cell == '.') {
+						// An empty space becomes infested with a bug if
+						// exactly one or two bugs are adjacent to it.
 						$newMap[$layer][$y][$x] = ($adjacentBugs == 1 || $adjacentBugs == 2) ? '#' : '.';
 					}
 				}
@@ -99,12 +90,14 @@
 		}
 
 		if ($hasLayers) {
-			if (hasBugs($newMap[$outer])) {
-				$newMap = addLayer($newMap, $outer - 1);
-			}
-			if (hasBugs($newMap[$inner])) {
-				$newMap = addLayer($newMap, $inner + 1);
-			}
+			// If our current known inner or outer layers have bugs on them,
+			// then we should track some new outer/inner layers in case they
+			// start to become infested.
+			$outerLayer = min(array_keys($map));
+			$innerLayer = max(array_keys($map));
+
+			if (hasBugs($newMap, $outerLayer)) { $newMap = addLayer($newMap, $outerLayer - 1); }
+			if (hasBugs($newMap, $innerLayer)) { $newMap = addLayer($newMap, $innerLayer + 1); }
 		}
 
 		return $newMap;
@@ -112,7 +105,6 @@
 
 	function getBiodiversity($map) {
 		$score = 0;
-
 		$calc = 1;
 		foreach ($map as $y => $row) {
 			foreach ($row as $x => $cell) {
@@ -141,17 +133,15 @@
 
 	$map = $initialMap;
 
-	$seenLayouts = [];
-	$id = json_encode($map[0]);
-	$layouts[$id] = true;
+	$layouts = [getBiodiversity($map[0]) => true];
 	while (true) {
 		$map = simulate($map);
-		$id = json_encode($map[0]);
-		if (isset($layouts[$id])) {
-			echo 'Part 1: ', getBiodiversity($map[0]), "\n";
+		$biodiversity = getBiodiversity($map[0]);
+		if (isset($layouts[$biodiversity])) {
+			echo 'Part 1: ', $biodiversity, "\n";
 			break;
 		}
-		$layouts[$id] = true;
+		$layouts[$biodiversity] = true;
 	}
 
 	// Uh Oh, Plutonians!
@@ -160,10 +150,7 @@
 	$map = addLayer($map, 1);
 	$map = addLayer($map, -1);
 
-	for ($i = 0; $i < 200; $i++) {
-		$map = simulate($map);
-	}
-
+	for ($i = 0; $i < 200; $i++) { $map = simulate($map); }
 	$bugCount = countBugs($map);
 
 	echo 'Part 2: ', $bugCount, "\n";
