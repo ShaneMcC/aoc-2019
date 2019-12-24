@@ -7,16 +7,10 @@
 	$__CLI['extrahelp'][] = '      --draw               Draw both parts.';
 
 	require_once(dirname(__FILE__) . '/../common/common.php');
-	$input = getInputLines();
 	$asteroids = [];
-	$y = 0;
-	foreach ($input as $line) {
-		$x = 0;
-		foreach (str_split($line) as $cell) {
-			if ($cell == '#') { $asteroids[$y][$x] = true; }
-			$x++;
-		}
-		$y++;
+
+	foreach (cells(getInputMap()) as [$x, $y, $cell]) {
+		if ($cell == '#') { $asteroids[$y][$x] = true; }
 	}
 
 	// Save incase we want to draw the map.

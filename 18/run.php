@@ -3,19 +3,14 @@
 	require_once(dirname(__FILE__) . '/../common/common.php');
 	require_once(dirname(__FILE__) . '/../common/pathfinder.php');
 
-	$map = [];
-	foreach (getInputLines() as $row) { $map[] = str_split($row); }
+	$map = getInputMap();
 
 	function removeDeadEnds($map) {
-		$maxX = max(array_keys($map[0]));
-		$maxY = max(array_keys($map));
-
 		$changed = 0;
 		do {
 			$changed = 0;
-
-			foreach (yieldXY(0, 0, $maxX, $maxY, true) as $x => $y) {
-				if ($map[$y][$x] != '.') { continue; }
+			foreach (cells($map) as [$x, $y, $cell]) {
+				if ($cell != '.') { continue; }
 
 				$walls = 0;
 
@@ -46,11 +41,9 @@
 	function getLocations($map) {
 		$objects = [];
 
-		foreach ($map as $y => $row) {
-			foreach ($row as $x => $cell) {
-				if ($cell != '#' && $cell != '.') {
-					$objects[$cell] = ['loc' => [$x, $y]];
-				}
+		foreach (cells($map) as [$x, $y, $cell]) {
+			if ($cell != '#' && $cell != '.') {
+				$objects[$cell] = ['loc' => [$x, $y]];
 			}
 		}
 

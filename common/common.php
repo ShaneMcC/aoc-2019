@@ -65,6 +65,17 @@
 	}
 
 	/**
+	 * Get the input as a map.
+	 *
+	 * @return File as a grid[$y][$x].
+	 */
+	function getInputMap() {
+		$map = [];
+		foreach (getInputLines() as $row) { $map[] = str_split($row); }
+		return $map;
+	}
+
+	/**
 	 * Get the input as an array of lines.
 	 *
 	 * @return File as an array of lines. Empty lines are ignored.
@@ -166,6 +177,19 @@
 		for ($x = $startx; $x <= ($inclusive ? $endx : $endx - 1); $x++) {
 			for ($y = $starty; $y <= ($inclusive ? $endy : $endy - 1); $y++) {
 				yield $x => $y;
+			}
+		}
+	}
+
+	/**
+	 * Generator to provide each cell of a grid.
+	 *
+	 * @param $grid Grid to look at.
+	 */
+	function cells($grid) {
+		foreach ($grid as $y => $row) {
+			foreach ($row as $x => $cell) {
+				yield [$x, $y, $cell];
 			}
 		}
 	}

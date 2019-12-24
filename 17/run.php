@@ -37,13 +37,13 @@
 	}
 	$callibration = 0;
 
-	foreach (yieldXY(0, 0, count($initialView[0]), count($initialView)) as $x => $y) {
-		if (isset($initialView[$y][$x]) && $initialView[$y][$x] == '#') {
+	foreach (cells($initialView) as [$x, $y, $cell]) {
+		if ($cell == '#') {
 			if ((isset($initialView[$y+1][$x]) && $initialView[$y+1][$x] == '#') &&
-				(isset($initialView[$y-1][$x]) && $initialView[$y-1][$x] == '#') &&
-				(isset($initialView[$y][$x-1]) && $initialView[$y][$x-1] == '#') &&
-				(isset($initialView[$y][$x+1]) && $initialView[$y][$x+1] == '#')) {
-				$callibration += ($x * $y);
+			    (isset($initialView[$y-1][$x]) && $initialView[$y-1][$x] == '#') &&
+			    (isset($initialView[$y][$x-1]) && $initialView[$y][$x-1] == '#') &&
+			    (isset($initialView[$y][$x+1]) && $initialView[$y][$x+1] == '#')) {
+			$callibration += ($x * $y);
 			}
 		}
 	}
@@ -59,8 +59,8 @@
 		global $directions;
 
 		$start = FALSE;
-		foreach (yieldXY(0, 0, count($map[0]), count($map)) as $x => $y) {
-			if (isset($map[$y][$x]) && $map[$y][$x] == '^') {
+		foreach (cells($map) as [$x, $y, $cell]) {
+			if ($cell == '^') {
 				$start = [$x, $y];
 				break;
 			}
