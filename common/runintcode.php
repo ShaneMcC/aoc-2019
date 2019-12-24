@@ -1,26 +1,40 @@
 #!/usr/bin/php
 <?php
-	$__CLI['long'] = ['output', 'fast', 'ascii'];
+	$__CLI['long'] = ['output', 'fast', 'ascii', 'nodebug'];
 	$__CLI['extrahelp'] = [];
 	$__CLI['extrahelp'][] = '      --output             Show all output at the end.';
 	$__CLI['extrahelp'][] = '      --ascii              Assume output is ascii';
 	$__CLI['extrahelp'][] = '      --fast               Remove sleep time on debug.';
+	$__CLI['extrahelp'][] = '      --nodebug            No debug, only output.';
 
 	require_once(dirname(__FILE__) . '/common.php');
 	require_once(dirname(__FILE__) . '/IntCodeVM.php');
 	$input = getInputLine();
 
 	$vm = new IntCodeVM(IntCodeVM::parseInstrLines($input));
-	$vm->setDebug(true);
-	if (isset($__CLIOPTS['fast'])) {
-		$vm->setDebug(true, 0);
+	$vm->useInterrupts(true);
+	if (!isset($__CLIOPTS['nodebug'])) {
+		$vm->setDebug(true);
+		if (isset($__CLIOPTS['fast'])) {
+			$vm->setDebug(true, 0);
+		}
 	}
+
+	$output = [];
 
 	while (!$vm->hasExited()) {
 		try {
 			$vm->step();
 			if ($vm->hasExited()) { break; }
-		} catch (Exception $ex) {
+		} catch (OutputGivenInterrupt $ex) {
+			$out = $vm->getOutput();
+			$output[] = $out;
+			if (isset($__CLIOPTS['ascii'])) {
+				echo chr($out);
+			} else {
+				echo 'Output: ', $out, "\n";
+			}
+		} catch (InputWantedException $ex) {
 			// Take user input.
 			while (true) {
 				$in = readline('Input Number: ');
@@ -34,9 +48,9 @@
 	if (isset($__CLIOPTS['output'])) {
 		echo 'All output: ', "\n";
 		if (isset($__CLIOPTS['ascii'])) {
-			foreach ($vm->getAllOutput() as $o) { echo chr($o); }
+			foreach ($output as $o) { echo chr($o); }
 		} else {
-			echo implode(', ', $vm->getAllOutput());
+			echo implode(', ', $output);
 		}
 
 		echo "\n";
