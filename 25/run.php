@@ -53,6 +53,9 @@
 
 		$name = trim($name[1]);
 
+		preg_match('# ==(.*?)Doors here lead:#is', $text, $desc);
+		$desc = trim($desc[1]);
+
 		// Find directions or items.
 		preg_match_all('#^- (.+)$#im', $text, $options);
 		$directions = [];
@@ -65,7 +68,7 @@
 			}
 		}
 
-		return [$name, $directions, $items];
+		return [$name, $desc, $directions, $items];
 	}
 
 	// Map the ship, find the rooms and items
@@ -107,15 +110,17 @@
 					break;
 				}
 
-				[$name, $directions, $items] = $roomData;
+				[$name, $desc, $directions, $items] = $roomData;
 
 				// Room is known, abort.
 				if (isset($allRooms[$name])) { continue; }
 
 
 				// New Room.
-				debugOut('Found new room: ', $name, ' with path: ', implode(', ', $path), "\n");
-				debugOut("\t", 'Directions: ', implode(', ', $directions), "\n");
+				debugOut('Found new room: ', $name, "\n");
+				debugOut("\t", 'Description: ', $desc, "\n");
+				debugOut("\t", 'Path to get here: ', implode(', ', $path), "\n");
+				debugOut("\t", 'Directions out of here: ', implode(', ', $directions), "\n");
 				debugOut("\t", 'Items: ', implode(', ', $items), "\n");
 
 				$allRooms[$name] = [];
@@ -240,7 +245,7 @@
 		// available to us on the floor.
 		$vm->inputText($floorDirection);
 		$vm->run();
-		$usefulItems = parseRoomInfo($vm->getOutputText())[2];
+		$usefulItems = parseRoomInfo($vm->getOutputText())[3];
 
 		debugOut('Trying all combinations.', "\n");
 
