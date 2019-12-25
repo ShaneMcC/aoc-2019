@@ -7,15 +7,25 @@
 	require_once(dirname(__FILE__) . '/../common/common.php');
 	require_once(dirname(__FILE__) . '/../common/IntCodeVM.php');
 
+	$input = getInputLine();
+
 	if (isset($__CLIOPTS['manual'])) {
-		// Run runintcode instead with appropriate options.
-		$__CLIOPTS['nodebug'] = $__CLIOPTS['asciiout'] = $__CLIOPTS['asciiin'] = true;
-		// TODO: This could be nicer.
-		require_once(dirname(__FILE__) . '/../common/runintcode.php');
+		// Interactive mode.
+		$vm = new IntCodeVM(IntCodeVM::parseInstrLines($input));
+		$vm->useInterrupts(true);
+
+		while (!$vm->hasExited()) {
+			try {
+				$vm->run();
+			} catch (OutputGivenInterrupt $ex) {
+				echo getOutputText($vm);
+			} catch (InputWantedException $ex) {
+				inputText($vm, strtolower(readline('Input: ')));
+			}
+		}
+
 		die();
 	}
-
-	$input = getInputLine();
 
 	// There are a bunch of items in the game, we need to collect (some of)
 	// them, then navigate to the weighing room holding the right set of items
