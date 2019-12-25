@@ -1,7 +1,19 @@
 #!/usr/bin/php
 <?php
+	$__CLI['long'] = ['manual'];
+	$__CLI['extrahelp'] = [];
+	$__CLI['extrahelp'][] = '      --manual             Run interactive mode to run manually.';
+
 	require_once(dirname(__FILE__) . '/../common/common.php');
 	require_once(dirname(__FILE__) . '/../common/IntCodeVM.php');
+
+	if (isset($__CLIOPTS['manual'])) {
+		// Run runintcode instead with appropriate options.
+		$__CLIOPTS['nodebug'] = $__CLIOPTS['asciiout'] = $__CLIOPTS['asciiin'] = true;
+		// TODO: This could be nicer.
+		require_once(dirname(__FILE__) . '/../common/runintcode.php');
+		die();
+	}
 
 	$input = getInputLine();
 
