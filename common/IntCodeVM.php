@@ -282,13 +282,14 @@
 		}
 
 		public function saveState() {
-			return ['in' => $this->input, 'out' => $this->output, 'loc' => $this->location, 'data' => $this->data, 'misc' => $this->miscData, 'exitCode' => $this->exitCode, 'exited' => $this->exited, 'wantsInput' => $this->wantsInput, 'interrupts' => ['in' => $this->inputErrorInterrupt, 'out' => $this->outputInterrupt]];
+			return ['in' => $this->input, 'out' => $this->output, 'loc' => $this->location, 'relbase' => $this->relativeBase, 'data' => $this->data, 'misc' => $this->miscData, 'exitCode' => $this->exitCode, 'exited' => $this->exited, 'wantsInput' => $this->wantsInput, 'interrupts' => ['in' => $this->inputErrorInterrupt, 'out' => $this->outputInterrupt]];
 		}
 
 		public function loadState($state) {
 			$this->input = $state['in'];
 			$this->output = $state['out'];
 			$this->location = $state['loc'];
+			$this->relativeBase = $state['relbase'];
 			$this->data = $state['data'];
 			$this->miscData = $state['misc'];
 			$this->exitCode = $state['exitCode'];
