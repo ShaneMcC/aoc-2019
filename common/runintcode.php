@@ -1,13 +1,15 @@
 #!/usr/bin/php
 <?php
-	$__CLI['long'] = ['output', 'fast', 'ascii', 'nodebug', 'in0:', 'in1:', 'in2:', 'out0'];
+	$__CLI['long'] = ['output', 'fast', 'ascii', 'asciiin', 'asciiout', 'nodebug', 'in0:', 'in1:', 'in2:', 'out0'];
 	$__CLI['extrahelp'] = [];
 	$__CLI['extrahelp'][] = '      --in0 <val>          Set <value> into mem[0]';
 	$__CLI['extrahelp'][] = '      --in1 <val>          Set <value> into mem[1]';
 	$__CLI['extrahelp'][] = '      --in2 <val>          Set <value> into mem[2]';
 	$__CLI['extrahelp'][] = '      --out0               Show the final value at mem[0]';
 	$__CLI['extrahelp'][] = '      --output             Show all output at the end.';
-	$__CLI['extrahelp'][] = '      --ascii              Assume output is ascii';
+	$__CLI['extrahelp'][] = '      --ascii              Assume input and output are ascii';
+	$__CLI['extrahelp'][] = '      --asciiout           Assume output is ascii';
+	$__CLI['extrahelp'][] = '      --asciiin            Convert input from ascii';
 	$__CLI['extrahelp'][] = '      --fast               Remove sleep time on debug.';
 	$__CLI['extrahelp'][] = '      --nodebug            No debug, only output.';
 
@@ -22,6 +24,10 @@
 		if (isset($__CLIOPTS['fast'])) {
 			$vm->setDebug(true, 0);
 		}
+	}
+
+	if (isset($__CLIOPTS['ascii'])) {
+		$__CLIOPTS['asciiin'] = $__CLIOPTS['asciiout'] = $__CLIOPTS['ascii'];
 	}
 
 	for ($i = 0; $i <= 2; $i++) {
@@ -41,18 +47,25 @@
 		} catch (OutputGivenInterrupt $ex) {
 			$out = $vm->getOutput();
 			$output[] = $out;
-			if (isset($__CLIOPTS['ascii'])) {
+			if (isset($__CLIOPTS['asciiout'])) {
 				echo chr($out);
 			} else {
 				echo 'Output: ', $out, "\n";
 			}
 		} catch (InputWantedException $ex) {
 			// Take user input.
-			while (true) {
-				$in = readline('Input Number: ');
-				if (is_numeric($in)) { break; }
+			$in = [];
+			if (isset($__CLIOPTS['asciiin'])) {
+				foreach (str_split(readline('Input: ')) as $i) { $in[] = ord($i); }
+				$in[] = ord("\n");
+			} else {
+				while (true) {
+					$i = readline('Input Number: ');
+					if (is_numeric($i)) { $in[] = $i; break; }
+					echo 'ERROR: Input must be numeric.', "\n";
+				}
 			}
-			$vm->appendInput($in);
+			foreach ($in as $i) { $vm->appendInput($i); }
 		}
 	}
 	echo 'End.', "\n\n";
