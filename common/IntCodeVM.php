@@ -257,6 +257,12 @@
 		public function setOutput($value) { $this->output = is_array($value) ? $value : [$value]; }
 		public function getOutput() { return array_shift($this->output); }
 		public function getAllOutput() { return $this->output; }
+		public function getOutputText() {
+			$text = '';
+			foreach ($this->getAllOutput() as $out) { $text .= chr($out); }
+			$this->clearOutput();
+			return $text;
+		}
 
 		/** Input queue for the VM. */
 		protected $input = '';
@@ -269,6 +275,11 @@
 		public function getAllInput() { return $this->input; }
 
 		public function wantsInput() { return $this->wantsInput; }
+
+		function inputText($text, $autoNewLine = true) {
+			foreach (str_split($text) as $t) { $this->appendInput(ord($t)); }
+			if ($autoNewLine) { $this->appendInput(ord("\n")); }
+		}
 
 		// Relative Base
 		protected $relativeBase = 0;

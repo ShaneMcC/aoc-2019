@@ -7,6 +7,27 @@
 	require_once(dirname(__FILE__) . '/../common/common.php');
 	require_once(dirname(__FILE__) . '/../common/IntCodeVM.php');
 
+	// There are a bunch of items in the game, we need to collect (some of)
+	// them, then navigate to the Pressure-Sensitive Floor holding the right
+	// set of items to convince the gate that we are a droid, then we can walk
+	//  past to the room with the answer.
+	//
+	// Sounds easy enough.
+	//
+	// We solve this by:
+	//  - Mapping out the entire ship and locating which items are available
+	//    and in which rooms. (These are different per input.)
+	//  - Collect all the items that except the ones that cause you to die or
+	//    be unable to continue.
+	//  - Go to the Security Checkpoint
+	//  - Drop all the items
+	//  - Pick up each combination of items and enter the Pressure-Sensitive
+	//    Floor
+	//  - If we don't get ejected back to the Security Checkpoint, we have our
+	//    answer.
+	//
+	// Alternatively, this can be played by hand by a human.
+
 	$input = getInputLine();
 
 	if (isset($__CLIOPTS['manual'])) {
@@ -18,35 +39,13 @@
 			try {
 				$vm->run();
 			} catch (OutputGivenInterrupt $ex) {
-				echo getOutputText($vm);
+				echo $vm->getOutputText();
 			} catch (InputWantedException $ex) {
-				inputText($vm, strtolower(readline('Input: ')));
+				$vm->inputText(strtolower(readline('Input: ')));
 			}
 		}
 
-		die();
-	}
-
-	// There are a bunch of items in the game, we need to collect (some of)
-	// them, then navigate to the weighing room holding the right set of items
-	// to convince the gate that we are a droid, then we can walk past to the
-	// room with the answer.
-	//
-	// Sounds easy enough, but first we need to find the items. Which are
-	// different per input.
-
-	function inputText($vm, $text) {
-		foreach (str_split($text) as $t) {
-			$vm->appendInput(ord($t));
-		}
-		$vm->appendInput(ord("\n"));
-	}
-
-	function getOutputText($vm) {
-		$text = '';
-		foreach ($vm->getAllOutput() as $out) { $text .= chr($out); }
-		$vm->clearOutput();
-		return $text;
+		die('Exited.');
 	}
 
 	// Map the ship, find the rooms and items
@@ -71,7 +70,7 @@
 				$vm->run();
 
 				// Get the most recent output from the VM.
-				$text = getOutputText($vm);
+				$text = $vm->getOutputText();
 
 				// Current path to get here.
 				$path = $vm->getMiscData('path');
@@ -125,7 +124,7 @@
 					foreach ($directions as $d) {
 						$newVM = $vm->clone();
 						$newVM->setMiscData('path', array_merge($path, [$d]));
-						inputText($newVM, $d);
+						$newVM->inputText($d);
 						$vms[] = $newVM;
 					}
 				}
@@ -143,24 +142,47 @@
 		return '';
 	}
 
-	// Collect an item.
-	// Run to room, take item, run back to start.
-	function collectItem($vm, $allRooms, $allItems, $item) {
-		if (!isset($allItems[$item]['room'])) { return; }
-		$targetRoom = $allRooms[$allItems[$item]['room']];
+	function goToRoom($vm, $allRooms, $room) {
+		if (!isset($allRooms[$room])) { return; }
+
+		debugOut('Going to ', $room, "\n");
+		$targetRoom = $allRooms[$room];
 
 		$reversePath = [];
 		// Walk to room.
 		foreach ($targetRoom['path'] as $path) {
-			inputText($vm, $path);
+			$vm->inputText($path);
 			$reversePath[] = getInverseDirection($path);
 		}
+		$vm->run();
+	}
+
+	function leaveRoom($vm, $allRooms, $room) {
+		if (!isset($allRooms[$room])) { return; }
+
+		debugOut('Leaving ', $room, "\n");
+		$targetRoom = $allRooms[$room];
+
+		// Get path back to start.
+		$reversePath = [];
+		foreach ($targetRoom['path'] as $path) { $reversePath[] = getInverseDirection($path); }
+		foreach (array_reverse($reversePath) as $path) { $vm->inputText($path); }
+	}
+
+	// Collect an item.
+	// Run to room, take item, run back to start.
+	function collectItem($vm, $allRooms, $allItems, $item) {
+		if (!isset($allItems[$item]['room'])) { return; }
+
+		// Go to room.
+		goToRoom($vm, $allRooms, $allItems[$item]['room']);
 
 		// Take item
-		inputText($vm, 'take ' . $item);
+		$vm->inputText('take ' . $item);
 
 		// Go back to start.
-		foreach (array_reverse($reversePath) as $path) { inputText($vm, $path); }
+		leaveRoom($vm, $allRooms, $allItems[$item]['room']);
+
 		$vm->run();
 		$vm->clearOutput();
 	}
@@ -168,55 +190,64 @@
 	// Current inventory.
 	function getInventory($vm) {
 		$vm->clearOutput();
-		inputText($vm, 'inv');
+		$vm->inputText('inv');
 		$vm->run();
-		$text = getOutputText($vm);
+		$text = $vm->getOutputText();
 		preg_match_all('#^- (.+)$#im', $text, $options);
 		return $options[1];
 	}
 
-	// Map the ship
-	[$vm, $allRooms, $allItems] = mapArea($input);
-
-	// Collect the items.
-	debugOut('Collecting items.', "\n");
-	foreach (array_keys($allItems) as $item) {
-		// Don't collect known-bad items.
-		if (in_array($item, ['photons', 'giant electromagnet', 'escape pod', 'infinite loop', 'molten lava'])) { continue; }
-		debugOut("\t", 'Collecting: ', $item, "\n");
-		collectItem($vm, $allRooms, $allItems, $item);
-	}
-
-	// Go to security room.
-	debugOut('Going to Security Room.', "\n");
-	$targetRoom = $allRooms['Security Checkpoint'];
-	foreach ($targetRoom['path'] as $path) { inputText($vm, $path); }
-	$vm->run();
-
-	// How do we get to the Pressure-Sensitive Floor ?
-	$floorDirection = array_pop($allRooms['Pressure-Sensitive Floor']['path']);
-
-	$usefulItems = getInventory($vm);
-
-	// Drop all our items.
-	debugOut('Dropping items.', "\n");
-	foreach ($usefulItems as $item) { inputText($vm, 'drop '  . $item); }
-	$vm->run();
-	$vm->clearOutput();
-
-	debugOut('Trying all combinations.', "\n");
-	foreach (getAllSets($usefulItems) as $combo) {
-		$testVM = $vm->clone();
-
-		debugOut("\t", 'Trying: ', implode(',', $combo), "\n");
-
-		foreach ($combo as $item) { inputText($testVM, 'take '  . $item); }
-		inputText($testVM, $floorDirection);
-		$testVM->run();
-
-		$text = getOutputText($testVM);
-		if (preg_match('#get in by typing (.*) on the keypad#', $text, $m)) {
-			echo 'Part 1: ', $m[1], "\n";
-			break;
+	// Collect all items.
+	function collectAllItems($vm, $allRooms, $allItems) {
+		// Collect the items.
+		debugOut('Collecting items.', "\n");
+		foreach (array_keys($allItems) as $item) {
+			// Don't collect known-bad items.
+			if (in_array($item, ['photons', 'giant electromagnet', 'escape pod', 'infinite loop', 'molten lava'])) { continue; }
+			debugOut("\t", 'Collecting: ', $item, "\n");
+			collectItem($vm, $allRooms, $allItems, $item);
 		}
 	}
+
+	// Drop all our current items.
+	function dropAllItems($vm) {
+		$currentItems = getInventory($vm);
+		debugOut('Dropping all items.', "\n");
+		foreach ($currentItems as $item) { $vm->inputText('drop '  . $item); }
+		$vm->run();
+		$vm->clearOutput();
+
+		return $currentItems;
+	}
+
+	function bypassPressureSensitiveFloor($vm, $allRooms, $usefulItems) {
+		// How do we get to the Pressure-Sensitive Floor?
+		$floorDirection = array_pop($allRooms['Pressure-Sensitive Floor']['path']);
+
+		debugOut('Trying all combinations.', "\n");
+		foreach (getAllSets($usefulItems) as $combo) {
+			$testVM = $vm->clone();
+
+			debugOut("\t", 'Trying: ', implode(',', $combo), "\n");
+
+			foreach ($combo as $item) { $testVM->inputText('take '  . $item); }
+			$testVM->inputText($floorDirection);
+			$testVM->run();
+
+			$text = $testVM->getOutputText();
+			if (preg_match('#get in by typing (.*) on the keypad#', $text, $m)) {
+				return [$testVM, $m[1]];
+			}
+		}
+
+	}
+
+
+	// Do Magic.
+	[$vm, $allRooms, $allItems] = mapArea($input);
+	collectAllItems($vm, $allRooms, $allItems);
+	goToRoom($vm, $allRooms, 'Security Checkpoint');
+	$usefulItems = dropAllItems($vm);
+	[$testVM, $part1] = bypassPressureSensitiveFloor($vm, $allRooms, $usefulItems);
+
+	echo 'Part 1: ', $part1, "\n";
