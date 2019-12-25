@@ -48,6 +48,26 @@
 		die('Exited.');
 	}
 
+	function parseRoomInfo($text) {
+		if (!preg_match('#==(.*)==#', $text, $name)) { return FALSE; }
+
+		$name = trim($name[1]);
+
+		// Find directions or items.
+		preg_match_all('#^- (.+)$#im', $text, $options);
+		$directions = [];
+		$items = [];
+		foreach ($options[1] as $opt) {
+			if (in_array($opt, ['north', 'south', 'east', 'west'])) {
+				$directions[] = $opt;
+			} else {
+				$items[] = $opt;
+			}
+		}
+
+		return [$name, $directions, $items];
+	}
+
 	// Map the ship, find the rooms and items
 	function mapArea($input) {
 		$baseVM = new IntCodeVM(IntCodeVM::parseInstrLines($input));
@@ -75,8 +95,10 @@
 				// Current path to get here.
 				$path = $vm->getMiscData('path');
 
+				$roomData = parseRoomInfo($text);
+
 				// Room name.
-				if (!preg_match('#==(.*)==#', $text, $name)) {
+				if ($roomData === FALSE) {
 					debugOut('==========', "\n");
 					debugOut('Something bad happened: ', "\n");
 					debugOut($text, "\n");
@@ -85,23 +107,11 @@
 					break;
 				}
 
-				// var_dump($text);
+				[$name, $directions, $items] = $roomData;
 
-				$name = trim($name[1]);
 				// Room is known, abort.
 				if (isset($allRooms[$name])) { continue; }
 
-				// Find directions or items.
-				preg_match_all('#^- (.+)$#im', $text, $options);
-				$directions = [];
-				$items = [];
-				foreach ($options[1] as $opt) {
-					if (in_array($opt, ['north', 'south', 'east', 'west'])) {
-						$directions[] = $opt;
-					} else {
-						$items[] = $opt;
-					}
-				}
 
 				// New Room.
 				debugOut('Found new room: ', $name, ' with path: ', implode(', ', $path), "\n");
@@ -220,12 +230,22 @@
 		return $currentItems;
 	}
 
-	function bypassPressureSensitiveFloor($vm, $allRooms, $usefulItems) {
+	// Assuming we are in the Security Checkpoint, try and bypass the pressure
+	// sensitive floor.
+	function bypassPressureSensitiveFloor($vm, $allRooms) {
 		// How do we get to the Pressure-Sensitive Floor?
 		$floorDirection = array_pop($allRooms['Pressure-Sensitive Floor']['path']);
 
+		// Try going into the room with nothing first to learn what we have
+		// available to us on the floor.
+		$vm->inputText($floorDirection);
+		$vm->run();
+		$usefulItems = parseRoomInfo($vm->getOutputText())[2];
+
 		debugOut('Trying all combinations.', "\n");
 		foreach (getAllSets($usefulItems) as $combo) {
+			if (empty($combo)) { continue; }
+
 			$testVM = $vm->clone();
 
 			debugOut("\t", 'Trying: ', implode(',', $combo), "\n");
@@ -242,12 +262,11 @@
 
 	}
 
-
 	// Do Magic.
 	[$vm, $allRooms, $allItems] = mapArea($input);
 	collectAllItems($vm, $allRooms, $allItems);
 	goToRoom($vm, $allRooms, 'Security Checkpoint');
-	$usefulItems = dropAllItems($vm);
-	[$testVM, $part1] = bypassPressureSensitiveFloor($vm, $allRooms, $usefulItems);
+	dropAllItems($vm);
+	[$testVM, $part1] = bypassPressureSensitiveFloor($vm, $allRooms);
 
 	echo 'Part 1: ', $part1, "\n";
