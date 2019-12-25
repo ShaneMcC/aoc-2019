@@ -243,21 +243,28 @@
 		$usefulItems = parseRoomInfo($vm->getOutputText())[2];
 
 		debugOut('Trying all combinations.', "\n");
+
+		$lastCombo = [];
 		foreach (getAllSets($usefulItems) as $combo) {
 			if (empty($combo)) { continue; }
 
-			$testVM = $vm->clone();
-
 			debugOut("\t", 'Trying: ', implode(',', $combo), "\n");
 
-			foreach ($combo as $item) { $testVM->inputText('take '  . $item); }
-			$testVM->inputText($floorDirection);
-			$testVM->run();
+			// Take and Drop items to make us hold the new combination.
+			foreach (array_diff($combo, $lastCombo) as $item) { $vm->inputText('take '  . $item); }
+			foreach (array_diff($lastCombo, $combo) as $item) { $vm->inputText('drop '  . $item); }
 
-			$text = $testVM->getOutputText();
+			// Move
+			$vm->inputText($floorDirection);
+			$vm->run();
+
+			// See what happened!
+			$text = $vm->getOutputText();
 			if (preg_match('#get in by typing (.*) on the keypad#', $text, $m)) {
-				return [$testVM, $m[1]];
+				return $m[1];
 			}
+
+			$lastCombo = $combo;
 		}
 
 	}
@@ -267,6 +274,6 @@
 	collectAllItems($vm, $allRooms, $allItems);
 	goToRoom($vm, $allRooms, 'Security Checkpoint');
 	dropAllItems($vm);
-	[$testVM, $part1] = bypassPressureSensitiveFloor($vm, $allRooms);
+	$part1 = bypassPressureSensitiveFloor($vm, $allRooms);
 
 	echo 'Part 1: ', $part1, "\n";
