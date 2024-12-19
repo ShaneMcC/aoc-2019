@@ -1,6 +1,6 @@
 #!/usr/bin/php
 <?php
-	$__CLI['long'] = ['output', 'fast', 'ascii', 'asciiin', 'asciiout', 'nodebug', 'in0:', 'in1:', 'in2:', 'out0'];
+	$__CLI['long'] = ['output', 'fast', 'ascii', 'asciiin', 'asciiout', 'nodebug', 'in0:', 'in1:', 'in2:', 'out0', 'infile:', 'asciiinfile:'];
 	$__CLI['extrahelp'] = [];
 	$__CLI['extrahelp'][] = '      --in0 <val>          Set <value> into mem[0]';
 	$__CLI['extrahelp'][] = '      --in1 <val>          Set <value> into mem[1]';
@@ -12,6 +12,8 @@
 	$__CLI['extrahelp'][] = '      --asciiin            Convert input from ascii';
 	$__CLI['extrahelp'][] = '      --fast               Remove sleep time on debug.';
 	$__CLI['extrahelp'][] = '      --nodebug            No debug, only output.';
+	$__CLI['extrahelp'][] = '      --infile <f>         Read requested user input from file (each line can be a comma separated set of numbers)';
+	$__CLI['extrahelp'][] = '      --asciiinfile <f>    Read requested user input from file (each byte as a number)';
 
 	require_once(dirname(__FILE__) . '/common.php');
 	require_once(dirname(__FILE__) . '/IntCodeVM.php');
@@ -39,6 +41,22 @@
 	}
 
 	$output = [];
+
+	if (isset($__CLIOPTS['infile'])) {
+		foreach (explode("\n", file_get_contents($__CLIOPTS['infile'])) as $line) {
+			foreach (explode(',', $line) as $num) {
+				$num = trim($num);
+				if (is_numeric($num)) {
+					$vm->appendInput($num);
+				}
+			}
+		}
+	} else if (isset($__CLIOPTS['asciiinfile'])) {
+		foreach (str_split(file_get_contents($__CLIOPTS['asciiinfile'])) as $b) {
+			$vm->appendInput(ord($b));
+		}
+	}
+
 
 	while (!$vm->hasExited()) {
 		try {
@@ -68,7 +86,7 @@
 			foreach ($in as $i) { $vm->appendInput($i); }
 		}
 	}
-	echo 'End.', "\n\n";
+	echo "\n", 'End.', "\n\n";
 
 	if (isset($__CLIOPTS['out0'])) {
 		echo 'Output at 0: ', $vm->getData(0), "\n";
